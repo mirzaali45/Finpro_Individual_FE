@@ -1,3 +1,26 @@
+// "use client";
+
+// import { AuthLayout } from "@/components/auth/Authlayout";
+// import RegisterForm from "@/components/auth/register/registerForm";
+
+// export default function RegisterPage() {
+//   return (
+//     <AuthLayout
+//       title="Get Started"
+//       subtitle="Create your account"
+//       sidebarTitle="InvoicePro"
+//       sidebarSubtitle="Your Complete Invoice Solution"
+//       sidebarDescription="Join thousands of businesses that trust InvoicePro to manage their invoicing needs. Get started in minutes with our simple registration process."
+//       sidebarFeatures={[
+//         "Unlimited invoices and estimates",
+//         "Secure cloud-based storage",
+//         "Free for small businesses",
+//       ]}
+//     >
+//       <RegisterForm />
+//     </AuthLayout>
+//   );
+// }
 // src/app/(auth)/register/page.tsx
 "use client";
 

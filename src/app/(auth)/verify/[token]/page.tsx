@@ -1,3 +1,34 @@
+// "use client";
+
+// import { useVerifyToken } from "@/components/auth/verify/hooks/useVerifyToken";
+// import VerifyForm from "@/components/auth/verify/VerifyForm";
+// import InvalidToken from "@/components/auth/verify/InvalidToken";
+// import VerificationSuccess from "@/components/auth/verify/VerificationSucces";
+// import VerifyingToken from "@/components/auth/verify/VerifyingToken";
+
+// export default function VerifyAccountPage({
+//   params,
+// }: {
+//   params: { token: string };
+// }) {
+//   const { token } = params;
+//   const { isVerifying, tokenValid, success, error } = useVerifyToken(token);
+
+//   if (isVerifying) {
+//     return <VerifyingToken />;
+//   }
+
+//   if (!tokenValid) {
+//     return <InvalidToken error={error} />;
+//   }
+
+//   if (success) {
+//     return <VerificationSuccess />;
+//   }
+
+//   return <VerifyForm token={token} />;
+// }
+
 // src/app/(auth)/verify/[token]/page.tsx
 "use client";
 

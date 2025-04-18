@@ -267,9 +267,7 @@ export type RecurringPattern =
 export type PaymentMethod =
   | "CASH"
   | "BANK_TRANSFER"
-  | "CREDIT_CARD"
-  | "DEBIT_CARD"
-  | "PAYPAL"
+  | "E_WALLET"
   | "OTHER";
 
 export interface InvoiceItem {
@@ -302,7 +300,9 @@ export interface Payment {
   invoice?: Invoice;
 }
 
+// Update definisi Invoice untuk menyertakan data pembayaran
 export interface Invoice {
+  // ...existing fields
   invoice_id: number;
   user_id: number;
   client_id: number;
@@ -326,7 +326,29 @@ export interface Invoice {
   recurring_pattern?: RecurringPattern;
 
   // Relations
-  user?: User;
+  user?: {
+    email?: string;
+    phone?: string;
+    profile?: {
+      company_name?: string | null;
+      address?: string | null;
+      phone?: string | null;
+      bank_accounts?: Array<{
+        id: number;
+        bank_name: string;
+        account_number: string;
+        account_name: string;
+        is_primary: boolean;
+      }> | null;
+      e_wallets?: Array<{
+        id: number;
+        wallet_type: string;
+        phone_number: string;
+        account_name: string;
+        is_primary: boolean;
+      }> | null;
+    } | null;
+  } | null;
   client?: Client;
   items?: InvoiceItem[];
   payments?: Payment[];

@@ -1,4 +1,26 @@
-// src/app/(auth)/login/page.tsx
+// "use client";
+
+// import { AuthLayout } from "@/components/auth/Authlayout";
+// import LoginForm from "@/components/auth/login/LoginForm";
+
+// export default function LoginPage() {
+//   return (
+//     <AuthLayout
+//       title="Welcome Back"
+//       subtitle="Sign in to access your account"
+//       sidebarTitle="InvoicePro"
+//       sidebarSubtitle="Streamline Your Invoice Management"
+//       sidebarDescription="Efficiently manage your invoices, track payments, and gain insights into your financial performance with our intuitive platform."
+//       sidebarFeatures={[
+//         "Create and send professional invoices in seconds",
+//         "Track payment status in real-time",
+//         "Generate comprehensive financial reports"
+//       ]}
+//     >
+//       <LoginForm />
+//     </AuthLayout>
+//   );
+// }
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -9,9 +31,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/providers/AuthProviders";
 import { Eye, EyeOff, AlertCircle } from "lucide-react";
-
-// Import types
-// Note: These are now defined in the google.d.ts file
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -25,30 +44,28 @@ export default function LoginPage() {
   const { login, googleLogin } = useAuth();
   const router = useRouter();
 
-  // Check if Google API is available
+  // Load Google Identity API
   useEffect(() => {
-    const checkGoogleAPI = () => {
+    const loadGoogleScript = () => {
+      // Check if script is already loaded
       if (
-        typeof window !== "undefined" &&
-        window.google &&
-        window.google.accounts &&
-        window.google.accounts.id
+        document.querySelector(
+          'script[src="https://accounts.google.com/gsi/client"]'
+        )
       ) {
         setGoogleLoaded(true);
-      } else {
-        setTimeout(checkGoogleAPI, 100);
+        return;
       }
+
+      const script = document.createElement("script");
+      script.src = "https://accounts.google.com/gsi/client";
+      script.onload = () => setGoogleLoaded(true);
+      script.async = true;
+      script.defer = true;
+      document.body.appendChild(script);
     };
 
-    checkGoogleAPI();
-
-    // Log if the Google Client ID is missing
-    if (
-      typeof window !== "undefined" &&
-      !process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
-    ) {
-      console.error("Google Client ID is not defined in environment variables");
-    }
+    loadGoogleScript();
   }, []);
 
   // Initialize Google button when API is loaded
@@ -59,51 +76,21 @@ export default function LoginPage() {
       const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
       if (!clientId) {
-        console.error("Google Client ID is not defined");
+        console.error(
+          "Google Client ID is not defined in environment variables"
+        );
         setError(
           "Google login configuration is missing. Please contact support."
         );
         return;
       }
 
-      if (
-        window.google &&
-        window.google.accounts &&
-        window.google.accounts.id
-      ) {
+      if (window.google && window.google.accounts) {
         window.google.accounts.id.initialize({
           client_id: clientId,
           callback: handleGoogleCredential,
-          context: "signin",
-          error_callback: (error: GoogleErrorResponse) => {
-            console.error("Google Sign-In Error:", error);
-
-            // Show specific error messages based on error type
-            if (error.type === "popup_failed_to_open") {
-              setError(
-                "Google sign-in popup was blocked. Please allow popups for this site."
-              );
-            } else if (error.type === "popup_closed") {
-              setError("Google sign-in was cancelled. Please try again.");
-            } else if (error.type === "invalid_client") {
-              setError("Invalid client configuration. Please contact support.");
-            } else if (error.type === "invalid_request") {
-              setError("Invalid request. Please try again later.");
-            } else if (error.type === "origin_mismatch") {
-              setError(
-                "Domain not authorized for Google sign-in. Please contact support."
-              );
-              console.error(
-                `Current origin ${window.location.origin} is not authorized in Google Cloud Console`
-              );
-            } else {
-              setError(
-                `Google sign-in failed: ${
-                  error.type || "Unknown error"
-                }. Please try email login.`
-              );
-            }
-          },
+          auto_select: false,
+          cancel_on_tap_outside: true,
         });
 
         window.google.accounts.id.renderButton(googleButtonRef.current, {
@@ -115,9 +102,10 @@ export default function LoginPage() {
           logo_alignment: "center",
           width: 250,
         });
-      }
 
-      console.log("Google Sign-In button initialized successfully");
+        // Optional: Display One Tap UI
+        // window.google.accounts.id.prompt();
+      }
     } catch (err) {
       console.error("Error initializing Google sign-in:", err);
       setError("Failed to initialize Google sign-in. Please try email login.");
@@ -125,7 +113,7 @@ export default function LoginPage() {
   }, [googleLoaded]);
 
   // Handler for Google credential
-  const handleGoogleCredential = async (response: GoogleCredentialResponse) => {
+  const handleGoogleCredential = async (response: any) => {
     try {
       setIsLoading(true);
       setError("");
@@ -133,7 +121,7 @@ export default function LoginPage() {
       console.log("Received Google credential response");
       const credential = response.credential;
 
-      // Decode JWT token from Google
+      // Decode JWT token from Google to extract basic info
       const base64Url = credential.split(".")[1];
       const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
       const jsonPayload = decodeURIComponent(
@@ -157,7 +145,7 @@ export default function LoginPage() {
 
       console.log("Google sign-in successful");
       router.push("/dashboard");
-    } catch (err: unknown) {
+    } catch (err: any) {
       console.error("Google login error:", err);
 
       // Handle specific error responses from the API
@@ -418,7 +406,7 @@ export default function LoginPage() {
               </div>
 
               <div className="mt-6 flex justify-center">
-                {/* Rendered Google button */}
+                {/* Google Sign-In button */}
                 <div
                   ref={googleButtonRef}
                   className="flex justify-center"
@@ -441,7 +429,7 @@ export default function LoginPage() {
         </motion.div>
 
         <p className="mt-8 text-center text-sm text-slate-500">
-          © 2025 InvoicePro. All rights reserved.
+          © {new Date().getFullYear()} InvoicePro. All rights reserved.
         </p>
       </div>
     </div>

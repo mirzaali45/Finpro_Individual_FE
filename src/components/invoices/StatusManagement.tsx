@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Invoice } from "@/types";
-import { Clock, CheckCircle, AlertTriangle } from "lucide-react";
+import { Clock, CheckCircle, AlertTriangle, Send } from "lucide-react";
 import PaymentForm from "./PaymentForm";
 
 interface StatusManagementProps {
@@ -73,6 +73,7 @@ export default function StatusManagement({
                 variant="outline"
                 onClick={() => onStatusChange("PENDING")}
               >
+                <Send className="h-4 w-4 mr-2" />
                 Send Invoice
               </Button>
               <Button

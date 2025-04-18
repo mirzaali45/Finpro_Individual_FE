@@ -226,6 +226,87 @@ export default function InvoicePrint({
       </div>
 
       {/* Payment Information */}
+      {(invoice.user?.profile?.bank_accounts &&
+        invoice.user.profile.bank_accounts.length > 0) ||
+      (invoice.user?.profile?.e_wallets &&
+        invoice.user.profile.e_wallets.length > 0) ? (
+        <div className="mb-8">
+          <h3 className="text-sm font-medium text-gray-700 mb-2">
+            Informasi Pembayaran
+          </h3>
+          <div className="bg-gray-50 rounded p-4">
+            <p className="text-xs text-gray-700 mb-3">
+              Silakan lakukan pembayaran melalui salah satu metode berikut:
+            </p>
+
+            {invoice.user?.profile?.bank_accounts &&
+              invoice.user.profile.bank_accounts.length > 0 && (
+                <div className="mb-4">
+                  <h4 className="text-xs font-medium text-gray-600 mb-1">
+                    Rekening Bank:
+                  </h4>
+                  <ul className="text-xs text-gray-700">
+                    {invoice.user.profile.bank_accounts
+                      .sort(
+                        (a, b) =>
+                          (b.is_primary ? 1 : 0) - (a.is_primary ? 1 : 0)
+                      )
+                      .map((account, idx) => (
+                        <li key={idx} className="mb-1">
+                          <span className="font-medium">
+                            {account.bank_name}:
+                          </span>{" "}
+                          {account.account_number} ({account.account_name})
+                          {account.is_primary && (
+                            <span className="text-green-600 ml-1">
+                              (Direkomendasikan)
+                            </span>
+                          )}
+                        </li>
+                      ))}
+                  </ul>
+                </div>
+              )}
+
+            {invoice.user?.profile?.e_wallets &&
+              invoice.user.profile.e_wallets.length > 0 && (
+                <div className="mb-4">
+                  <h4 className="text-xs font-medium text-gray-600 mb-1">
+                    E-Wallet:
+                  </h4>
+                  <ul className="text-xs text-gray-700">
+                    {invoice.user.profile.e_wallets
+                      .sort(
+                        (a, b) =>
+                          (b.is_primary ? 1 : 0) - (a.is_primary ? 1 : 0)
+                      )
+                      .map((wallet, idx) => (
+                        <li key={idx} className="mb-1">
+                          <span className="font-medium">
+                            {wallet.wallet_type}:
+                          </span>{" "}
+                          {wallet.phone_number} ({wallet.account_name})
+                          {wallet.is_primary && (
+                            <span className="text-green-600 ml-1">
+                              (Direkomendasikan)
+                            </span>
+                          )}
+                        </li>
+                      ))}
+                  </ul>
+                </div>
+              )}
+
+            <p className="text-xs text-gray-700 mt-2 italic">
+              Please include the invoice number #{invoice.invoice_number} when
+              making payments to facilitate verification. and if so, please send
+              proof of payment via email or telephone number.
+            </p>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Payment History */}
       {invoice.payments && invoice.payments.length > 0 && (
         <div className="mb-8">
           <h3 className="text-sm font-medium text-gray-700 mb-2">

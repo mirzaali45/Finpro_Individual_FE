@@ -1,6 +1,6 @@
 // google.d.ts - Place this in your types directory
 // This extends the existing Google type definitions
-
+// types/google.d.ts
 interface Window {
   google:
     | {
