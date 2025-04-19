@@ -4,7 +4,8 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import { Tag, DollarSign, Archive, Image as ImageIcon } from "lucide-react";
+import { Tag, DollarSign, Archive } from "lucide-react";
+import Image from "next/image";
 
 interface ProductCardProps {
   product: Product;
@@ -22,9 +23,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       >
         {product.image && (
           <div className="relative w-full h-40 overflow-hidden">
-            <img
+            <Image
               src={product.image}
               alt={product.name}
+              width={300}
+              height={200}
               className="w-full h-full object-cover"
             />
           </div>

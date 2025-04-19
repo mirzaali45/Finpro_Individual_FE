@@ -54,7 +54,7 @@ export default function InvoiceItemForm({
         }));
       }
     }
-  }, [item.product_id, item.quantity, products, initialItem]);
+  }, [item.product_id, item.quantity, products, initialItem, item.description]);
 
   const handleChange = (
     e: React.ChangeEvent<

@@ -9,9 +9,20 @@ import { CreateProductFormData } from "@/types";
 import { ArrowLeft, AlertCircle, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { toast } from "@/components/ui/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import CloudinaryImage from "@/components/cloudinaryImage";
+
+// Type for API errors
+interface ApiError {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+  message?: string;
+}
 
 interface ValidationErrors {
   name?: string;
@@ -25,6 +36,7 @@ interface ValidationErrors {
 
 export default function NewProductPage() {
   const router = useRouter();
+    const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
@@ -211,12 +223,13 @@ export default function NewProductPage() {
 
       // Navigate to product detail page or products list
       router.push(`/dashboard/products/${newProduct.product_id}`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error creating product:", err);
 
+      const apiError = err as ApiError;
       const errorMessage =
-        err.message ||
-        err.response?.data?.message ||
+        apiError.message ||
+        apiError.response?.data?.message ||
         "Failed to create product. Please try again.";
 
       setError(errorMessage);
@@ -422,9 +435,11 @@ export default function NewProductPage() {
               {/* Image Preview */}
               {previewUrl && (
                 <div className="mt-2 mb-4 relative w-40 h-40 border rounded-md overflow-hidden">
-                  <img
+                  <CloudinaryImage
                     src={previewUrl}
                     alt="Product preview"
+                    width={300} // Add appropriate width
+                    height={200}
                     className="w-full h-full object-cover"
                   />
                   <button

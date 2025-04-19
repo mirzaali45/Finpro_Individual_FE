@@ -473,8 +473,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { invoiceApi } from "@/lib/api";
-import { Invoice, Payment, PaymentMethod } from "@/types";
-import { formatCurrency } from "@/lib/utils";
+import { Invoice, PaymentMethod } from "@/types";
 import InvoicePrint from "@/components/invoices/invoiceprint";
 import InvoiceContent from "@/components/invoices/InvoiceContent";
 import StatusManagement from "@/components/invoices/StatusManagement";

@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { clientApi, invoiceApi, productApi } from "@/lib/api";
-import { formatCurrency, formatDate, calculateDueStatus } from "@/lib/utils";
-import { Client, Invoice, Product } from "@/types/index";
+import { formatCurrency, formatDate } from "@/lib/utils";
+import { Invoice } from "@/types/index";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowUpRight, Clock, DollarSign, FileText, Users } from "lucide-react";
@@ -11,7 +11,6 @@ import { ArrowUpRight, Clock, DollarSign, FileText, Users } from "lucide-react";
 export default function DashboardPage() {
   const [recentInvoices, setRecentInvoices] = useState<Invoice[]>([]);
   const [clientCount, setClientCount] = useState<number>(0);
-  const [productCount, setProductCount] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [stats, setStats] = useState({
     totalOutstanding: 0,
@@ -73,9 +72,8 @@ export default function DashboardPage() {
         const clients = await clientApi.getClients();
         setClientCount(clients.length);
 
-        // Fetch products count
-        const products = await productApi.getProducts();
-        setProductCount(products.length);
+        // Fetch products count - just to demonstrate that the endpoint is working
+        await productApi.getProducts();
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
       } finally {
@@ -196,7 +194,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Total Products */}
+        {/* Draft Invoices */}
         <div className="bg-white overflow-hidden shadow rounded-lg">
           <div className="p-5">
             <div className="flex items-center">

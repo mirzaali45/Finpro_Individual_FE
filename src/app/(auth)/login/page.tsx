@@ -23,7 +23,7 @@
 // }
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -31,6 +31,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/providers/AuthProviders";
 import { Eye, EyeOff, AlertCircle } from "lucide-react";
+
+interface GoogleCredentialResponse {
+  credential: string;
+}
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -43,6 +47,66 @@ export default function LoginPage() {
 
   const { login, googleLogin } = useAuth();
   const router = useRouter();
+
+  // Handler for Google credential
+  const handleGoogleCredential = useCallback(
+    async (response: GoogleCredentialResponse) => {
+      try {
+        setIsLoading(true);
+        setError("");
+
+        console.log("Received Google credential response");
+        const credential = response.credential;
+
+        // Decode JWT token from Google to extract basic info
+        const base64Url = credential.split(".")[1];
+        const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+        const jsonPayload = decodeURIComponent(
+          atob(base64)
+            .split("")
+            .map(function (c) {
+              return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+            })
+            .join("")
+        );
+
+        const { email, name, picture } = JSON.parse(jsonPayload);
+        console.log(`Processing Google sign-in for ${email}`);
+
+        // Login using Google credential
+        await googleLogin({
+          email,
+          name,
+          picture,
+        });
+
+        console.log("Google sign-in successful");
+        router.push("/dashboard");
+      } catch (err) {
+        console.error("Google login error:", err);
+
+        // Handle specific error responses from the API
+        if (err && typeof err === "object" && "response" in err) {
+          const apiError = err as {
+            response?: { data?: { message?: string } };
+          };
+          setError(
+            apiError.response?.data?.message ||
+              "Failed to login with Google. Please try again."
+          );
+        } else {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Failed to login with Google. Please try again."
+          );
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [googleLogin, router]
+  );
 
   // Load Google Identity API
   useEffect(() => {
@@ -110,62 +174,7 @@ export default function LoginPage() {
       console.error("Error initializing Google sign-in:", err);
       setError("Failed to initialize Google sign-in. Please try email login.");
     }
-  }, [googleLoaded]);
-
-  // Handler for Google credential
-  const handleGoogleCredential = async (response: any) => {
-    try {
-      setIsLoading(true);
-      setError("");
-
-      console.log("Received Google credential response");
-      const credential = response.credential;
-
-      // Decode JWT token from Google to extract basic info
-      const base64Url = credential.split(".")[1];
-      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-      const jsonPayload = decodeURIComponent(
-        atob(base64)
-          .split("")
-          .map(function (c) {
-            return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
-          })
-          .join("")
-      );
-
-      const { email, name, picture } = JSON.parse(jsonPayload);
-      console.log(`Processing Google sign-in for ${email}`);
-
-      // Login using Google credential
-      await googleLogin({
-        email,
-        name,
-        picture,
-      });
-
-      console.log("Google sign-in successful");
-      router.push("/dashboard");
-    } catch (err: any) {
-      console.error("Google login error:", err);
-
-      // Handle specific error responses from the API
-      if (err && typeof err === "object" && "response" in err) {
-        const apiError = err as { response?: { data?: { message?: string } } };
-        setError(
-          apiError.response?.data?.message ||
-            "Failed to login with Google. Please try again."
-        );
-      } else {
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Failed to login with Google. Please try again."
-        );
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [googleLoaded, handleGoogleCredential]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -175,9 +184,10 @@ export default function LoginPage() {
     try {
       await login(email, password);
       router.push("/dashboard");
-    } catch (err: any) {
+    } catch (err) {
+      const apiError = err as { response?: { data?: { message?: string } } };
       setError(
-        err.response?.data?.message || "Failed to login. Please try again."
+        apiError.response?.data?.message || "Failed to login. Please try again."
       );
     } finally {
       setIsLoading(false);
@@ -417,7 +427,7 @@ export default function LoginPage() {
 
           <div className="mt-8 text-center">
             <p className="text-slate-600">
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
               <Link
                 href="/register"
                 className="font-medium text-blue-600 hover:text-blue-800 hover:underline"

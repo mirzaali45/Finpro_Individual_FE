@@ -5,7 +5,8 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { User } from "@/types/homeTypes";
+import { User } from "@/types";
+// import { User } from "@/types/homeTypes";
 
 interface HeroSectionProps {
   user: User | null;

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { clientApi, invoiceApi } from "@/lib/api";
 import { Client, Invoice } from "@/types";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { ApiError, formatCurrency, formatDate } from "@/lib/utils";
 import {
   ArrowLeft,
   Mail,
@@ -87,9 +87,10 @@ export default function ClientDetailPage({
 
       await clientApi.deleteClient(client.client_id);
       router.push("/dashboard/clients");
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const apiError = err as ApiError;
       setError(
-        err.response?.data?.message ||
+        apiError.response?.data?.message ||
           "Failed to delete client. Please try again."
       );
       setIsDeleting(false);

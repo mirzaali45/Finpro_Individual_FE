@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { authApi } from "@/lib/api";
 import { Mail } from "lucide-react";
+import { ApiError } from "@/lib/utils";
 
 interface ChangeEmailFormProps {
   currentEmail: string;
@@ -49,13 +50,13 @@ export default function ChangeEmailForm({
       } else {
         throw new Error(response?.message || "Failed to request email change");
       }
-    } catch (err: any) {
-      console.error("Email change error:", err);
+    } catch (err: unknown) {
+      const apiError = err as ApiError;
       setState({
         ...state,
         error:
-          err.response?.data?.message ||
-          err.message ||
+          apiError.response?.data?.message ||
+          apiError.message ||
           "Failed to request email change. Please try again.",
         loading: false,
       });

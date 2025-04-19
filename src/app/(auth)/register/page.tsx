@@ -21,10 +21,11 @@
 //     </AuthLayout>
 //   );
 // }
+
 // src/app/(auth)/register/page.tsx
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -46,6 +47,16 @@ interface GoogleErrorResponse {
   message?: string;
 }
 
+// Type for API errors
+interface ApiError {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+  message?: string;
+}
+
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
@@ -55,6 +66,67 @@ export default function RegisterPage() {
   const googleButtonRef = useRef<HTMLDivElement>(null);
 
   const router = useRouter();
+
+  // Handle Google credential - using useCallback to prevent dependency issues
+  const handleGoogleCredential = useCallback(
+    async (response: GoogleCredentialResponse) => {
+      try {
+        setIsLoading(true);
+        setError("");
+
+        console.log("Received Google credential response");
+        const credential = response.credential;
+
+        // Decode JWT token from Google
+        const base64Url = credential.split(".")[1];
+        const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+        const jsonPayload = decodeURIComponent(
+          atob(base64)
+            .split("")
+            .map(function (c) {
+              return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+            })
+            .join("")
+        );
+
+        const { email, name, picture } = JSON.parse(jsonPayload);
+        console.log(`Processing Google sign-up for ${email}`);
+
+        // Register using Google credential
+        const result = await authApi.googleLogin({
+          email,
+          name,
+          picture,
+        });
+
+        console.log("Google sign-up successful");
+        localStorage.setItem("token", result.token);
+        router.push("/dashboard");
+      } catch (err: unknown) {
+        console.error("Google registration error:", err);
+
+        // Handle specific error responses from the API
+        if (err && typeof err === "object" && "response" in err) {
+          const apiError = err as {
+            response?: { data?: { message?: string } };
+          };
+          setError(
+            apiError.response?.data?.message ||
+              "Failed to register with Google. Please try again."
+          );
+        } else {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Failed to register with Google. Please try again."
+          );
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [router]
+  );
 
   // Check if Google API is available
   useEffect(() => {
@@ -155,63 +227,7 @@ export default function RegisterPage() {
         "Failed to initialize Google sign-up. Please try email registration."
       );
     }
-  }, [googleLoaded]);
-
-  // Handler for Google credential
-  const handleGoogleCredential = async (response: GoogleCredentialResponse) => {
-    try {
-      setIsLoading(true);
-      setError("");
-
-      console.log("Received Google credential response");
-      const credential = response.credential;
-
-      // Decode JWT token from Google
-      const base64Url = credential.split(".")[1];
-      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-      const jsonPayload = decodeURIComponent(
-        atob(base64)
-          .split("")
-          .map(function (c) {
-            return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
-          })
-          .join("")
-      );
-
-      const { email, name, picture } = JSON.parse(jsonPayload);
-      console.log(`Processing Google sign-up for ${email}`);
-
-      // Register using Google credential
-      const result = await authApi.googleLogin({
-        email,
-        name,
-        picture,
-      });
-
-      console.log("Google sign-up successful");
-      localStorage.setItem("token", result.token);
-      router.push("/dashboard");
-    } catch (err: unknown) {
-      console.error("Google registration error:", err);
-
-      // Handle specific error responses from the API
-      if (err && typeof err === "object" && "response" in err) {
-        const apiError = err as { response?: { data?: { message?: string } } };
-        setError(
-          apiError.response?.data?.message ||
-            "Failed to register with Google. Please try again."
-        );
-      } else {
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Failed to register with Google. Please try again."
-        );
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [googleLoaded, handleGoogleCredential]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -222,9 +238,11 @@ export default function RegisterPage() {
     try {
       await authApi.register({ email });
       setSuccess(true);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const apiError = err as ApiError;
       setError(
-        err.response?.data?.message || "Failed to register. Please try again."
+        apiError.response?.data?.message ||
+          "Failed to register. Please try again."
       );
     } finally {
       setIsLoading(false);
@@ -355,7 +373,7 @@ export default function RegisterPage() {
                 </h3>
                 <div className="mt-2 mb-6">
                   <p className="text-slate-600">
-                    We've sent a verification email to{" "}
+                    We&apos;ve sent a verification email to{" "}
                     <span className="font-semibold">{email}</span>.
                     <br />
                     Please check your inbox to complete your registration.
@@ -390,7 +408,7 @@ export default function RegisterPage() {
                       className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                     <p className="mt-2 text-sm text-slate-500">
-                      We'll send you a verification email to complete your
+                      We&apos;ll send you a verification email to complete your
                       registration.
                     </p>
                   </div>

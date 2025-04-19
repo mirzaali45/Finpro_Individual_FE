@@ -54,7 +54,6 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    console.error("API Error:", error.response || error);
     return Promise.reject(error);
   }
 );
@@ -143,18 +142,7 @@ export const authApi = {
     return response.data;
   },
 
-  // updateProfile: async (
-  //   data: UpdateProfileFormData
-  // ): Promise<{
-  //   status: string;
-  //   message: string;
-  //   user: User;
-  //   profile: Profile | null;
-  // }> => {
-  //   const response = await apiClient.put("/auth/profile", data);
-  //   return response.data;
-  // },
-  // Update in api.ts - Fixed updateProfile method
+  // Define a type for File input
   updateProfile: async (
     data: UpdateProfileFormData
   ): Promise<{
@@ -193,14 +181,16 @@ export const authApi = {
       if (hasBase64Avatar) {
         formData.append("avatar", data.avatar as string);
       } else if (data.avatar && typeof data.avatar === "object") {
-        formData.append("avatar", data.avatar as any);
+        // Use File type for file uploads
+        formData.append("avatar", data.avatar as File);
       }
 
       // Add logo if it exists
       if (hasBase64Logo) {
         formData.append("logo", data.logo as string);
       } else if (data.logo && typeof data.logo === "object") {
-        formData.append("logo", data.logo as any);
+        // Use File type for file uploads
+        formData.append("logo", data.logo as File);
       }
 
       const response = await apiClient.put("/auth/profile", formData, {
@@ -316,38 +306,32 @@ export const clientApi = {
 
 // Product API functions
 export const productApi = {
-  // getProducts: async (): Promise<Product[]> => {
-  //   const response = await apiClient.get("/products");
-  //   return response.data.products;
-  // },
-  // getProducts: async (includeDeleted = false): Promise<Product[]> => {
-  //   const response = await apiClient.get(
-  //     `/products?includeDeleted=${includeDeleted}`
-  //   );
-  //   return response.data;
-  // },
-  // Get all products (with optional filter for archived products)
-  getProducts: async (includeDeleted = false): Promise<Product[]> => {
+  // Get all products
+  // Get all products
+  getProducts: async (showArchivedProducts?: boolean): Promise<Product[]> => {
     try {
-      const response = await apiClient.get(`/products`); // Simplified endpoint
+      const response = await apiClient.get(`/products`);
+      let products: Product[] = [];
+
       // Handle different response formats
       if (Array.isArray(response.data)) {
-        return response.data;
+        products = response.data;
       } else if (response.data.products) {
-        return response.data.products;
-      } else {
-        return [];
+        products = response.data.products;
       }
+
+      // Filter out archived products if not explicitly requested to show them
+      if (showArchivedProducts === false) {
+        return products.filter((product) => !product.deleted_at);
+      }
+
+      return products;
     } catch (error) {
       console.error("Error fetching products:", error);
       throw error;
     }
   },
 
-  // getProduct: async (id: number): Promise<Product> => {
-  //   const response = await apiClient.get(`/products/${id}`);
-  //   return response.data.product;
-  // },
   // Get a single product by ID
   getProduct: async (id: number): Promise<Product> => {
     try {
@@ -419,13 +403,7 @@ export const productApi = {
   deleteProduct: async (id: number): Promise<void> => {
     await apiClient.delete(`/products/${id}`);
   },
-  // /**
-  //  * Soft delete (archive) a product
-  //  */
-  // async archiveProduct(productId: number): Promise<Product> {
-  //   const response = await apiClient.post(`/products/${productId}/archive`);
-  //   return response.data;
-  // },
+
   // Archive a product (soft delete)
   archiveProduct: async (id: number): Promise<Product> => {
     const response = await apiClient.post(`/products/${id}/archive`);
@@ -455,7 +433,9 @@ export const productApi = {
   },
 
   // Get product usage in invoices
-  getProductUsage: async (productId: number): Promise<any[]> => {
+  getProductUsage: async (
+    productId: number
+  ): Promise<Record<string, unknown>[]> => {
     try {
       const response = await apiClient.get(
         `/invoices/product-usage/${productId}`
@@ -491,10 +471,6 @@ export const invoiceApi = {
     return response.data.invoice;
   },
 
-  // createInvoice: async (data: CreateInvoiceFormData): Promise<Invoice> => {
-  //   const response = await apiClient.post("/invoices", data);
-  //   return response.data.invoice;
-  // },
   async createInvoice(data: CreateInvoiceFormData): Promise<Invoice> {
     // Ubah status invoice di backend
     const response = await apiClient.post("/invoices", {
@@ -593,7 +569,6 @@ export const invoiceApi = {
     );
     return response.data.invoice;
   },
-  // Tambahkan ke objek invoiceApi di src/lib/api/invoiceApi.ts
 
   /**
    * Send an invoice via email to the client
@@ -621,9 +596,6 @@ export const invoiceApi = {
     }
   },
 
-  /**
-   * Create an invoice and send it to the client via email
-   */
   /**
    * Create an invoice and send it to the client via email
    */

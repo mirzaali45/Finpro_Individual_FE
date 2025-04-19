@@ -1,15 +1,23 @@
-// reset-password/page.tsx
+// src/app/(auth)/reset-password/page.tsx
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { authApi } from "@/lib/api";
 import Link from "next/link";
 
+// Type for API errors
+interface ApiError {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+  message?: string;
+}
+
 export default function ResetPasswordPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -29,9 +37,10 @@ export default function ResetPasswordPage() {
     try {
       await authApi.resetPassword({ email });
       setSuccess(true);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const apiError = err as ApiError;
       setError(
-        err.response?.data?.message ||
+        apiError.response?.data?.message ||
           "Failed to send reset password link. Please try again."
       );
     } finally {
@@ -81,7 +90,8 @@ export default function ResetPasswordPage() {
               </h3>
               <div className="mt-2">
                 <p className="text-sm text-gray-500">
-                  We've sent a password reset link to <strong>{email}</strong>.
+                  We&apos;ve sent a password reset link to{" "}
+                  <strong>{email}</strong>.
                   <br />
                   Please check your inbox and follow the instructions to reset
                   your password.

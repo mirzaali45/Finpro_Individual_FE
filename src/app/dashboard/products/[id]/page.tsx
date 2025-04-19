@@ -30,6 +30,8 @@
 //   DialogFooter,
 //   DialogDescription,
 // } from "@/components/ui/dialog";
+// import Image from "next/image";
+// import CloudinaryImage from "@/components/cloudinaryImage";
 
 // export default function ProductDetailPage({
 //   params,
@@ -380,9 +382,11 @@
 //           </DialogHeader>
 //           <div className="flex justify-center">
 //             {product.image && (
-//               <img
+//               <CloudinaryImage
 //                 src={product.image}
 //                 alt={product.name}
+//                 width={300}
+//                 height={200}
 //                 className="max-h-[70vh] object-contain"
 //               />
 //             )}
@@ -418,9 +422,11 @@
 //                   className="w-full h-48 overflow-hidden relative rounded-md cursor-pointer"
 //                   onClick={() => setShowImageDialog(true)}
 //                 >
-//                   <img
+//                   <CloudinaryImage
 //                     src={product.image}
 //                     alt={product.name}
+//                     width={300} // Add appropriate width
+//                     height={200}
 //                     className="object-cover w-full h-full hover:opacity-90 transition-opacity"
 //                   />
 //                   <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 hover:bg-opacity-20 transition-opacity">
@@ -731,7 +737,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { productApi, invoiceApi } from "@/lib/api";
+import { productApi } from "@/lib/api";
 import { Product, InvoiceItem } from "@/types";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import {
@@ -748,7 +754,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/components/ui/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import {
   Dialog,
   DialogContent,
@@ -757,6 +763,17 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
+import CloudinaryImage from "@/components/cloudinaryImage";
+
+// Type for API errors
+interface ApiError {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+  message?: string;
+}
 
 export default function ProductDetailPage({
   params,
@@ -764,6 +781,7 @@ export default function ProductDetailPage({
   params: { id: string };
 }) {
   const router = useRouter();
+  const { toast } = useToast();
   const productId = parseInt(params.id);
 
   const [product, setProduct] = useState<Product | null>(null);
@@ -777,6 +795,7 @@ export default function ProductDetailPage({
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
   const [showImageDialog, setShowImageDialog] = useState(false);
 
+  // First, update the useEffect block with the proper type handling:
   useEffect(() => {
     const fetchProductData = async () => {
       try {
@@ -797,13 +816,20 @@ export default function ProductDetailPage({
         // Fetch invoices to check product usage
         try {
           const invoiceItems = await productApi.getProductUsage(productId);
-          setProductUsage(Array.isArray(invoiceItems) ? invoiceItems : []);
+
+          // Safely transform the data to the expected type
+          if (Array.isArray(invoiceItems)) {
+            // First cast to unknown, then to InvoiceItem[] as TypeScript suggests
+            const typedItems = invoiceItems as unknown as InvoiceItem[];
+            setProductUsage(typedItems);
+          } else {
+            setProductUsage([]);
+          }
         } catch (err) {
           console.error("Failed to fetch product usage:", err);
           setProductUsage([]);
         }
-      } catch (err: any) {
-        console.error("Error fetching product data:", err);
+      } catch {
         setError("Failed to load product details. Please try again.");
         toast({
           title: "Error",
@@ -816,7 +842,7 @@ export default function ProductDetailPage({
     };
 
     fetchProductData();
-  }, [productId]);
+  }, [productId, toast]);
 
   const handleDeleteProduct = async () => {
     try {
@@ -840,12 +866,13 @@ export default function ProductDetailPage({
         description: "Product deleted successfully",
       });
       router.push("/dashboard/products");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error deleting product:", err);
+      const apiError = err as ApiError;
       setError("Failed to delete product. Please try again.");
       toast({
         title: "Error",
-        description: err.message || "Failed to delete product",
+        description: apiError.message || "Failed to delete product",
         variant: "destructive",
       });
     } finally {
@@ -872,12 +899,13 @@ export default function ProductDetailPage({
         title: "Success",
         description: "Product archived successfully",
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error archiving product:", err);
+      const apiError = err as ApiError;
       setError("Failed to archive product. Please try again.");
       toast({
         title: "Error",
-        description: err.message || "Failed to archive product",
+        description: apiError.message || "Failed to archive product",
         variant: "destructive",
       });
     } finally {
@@ -904,12 +932,13 @@ export default function ProductDetailPage({
         title: "Success",
         description: "Product restored successfully",
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error restoring product:", err);
+      const apiError = err as ApiError;
       setError("Failed to restore product. Please try again.");
       toast({
         title: "Error",
-        description: err.message || "Failed to restore product",
+        description: apiError.message || "Failed to restore product",
         variant: "destructive",
       });
     } finally {
@@ -1044,7 +1073,7 @@ export default function ProductDetailPage({
               {productUsage.length > 0 && (
                 <div className="mt-2 text-red-600 font-medium">
                   Warning: This product is used in {productUsage.length}{" "}
-                  invoice(s). You cannot delete it while it's referenced in
+                  invoice(s). You cannot delete it while it&apos;s referenced in
                   invoices.
                 </div>
               )}
@@ -1076,7 +1105,7 @@ export default function ProductDetailPage({
             <DialogTitle>Archive Product</DialogTitle>
             <DialogDescription>
               Are you sure you want to archive this product? Archived products
-              won't appear in your active product list, but will still be
+              won&apos;t appear in your active product list, but will still be
               available for existing invoices.
             </DialogDescription>
           </DialogHeader>
@@ -1107,9 +1136,11 @@ export default function ProductDetailPage({
           </DialogHeader>
           <div className="flex justify-center">
             {product.image && (
-              <img
+              <CloudinaryImage
                 src={product.image}
                 alt={product.name}
+                width={300}
+                height={200}
                 className="max-h-[70vh] object-contain"
               />
             )}
@@ -1145,9 +1176,11 @@ export default function ProductDetailPage({
                   className="w-full h-48 overflow-hidden relative rounded-md cursor-pointer"
                   onClick={() => setShowImageDialog(true)}
                 >
-                  <img
+                  <CloudinaryImage
                     src={product.image}
                     alt={product.name}
+                    width={300}
+                    height={200}
                     className="object-cover w-full h-full hover:opacity-90 transition-opacity"
                   />
                   <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 hover:bg-opacity-20 transition-opacity">
@@ -1320,7 +1353,7 @@ export default function ProductDetailPage({
             {productUsage.length === 0 ? (
               <div className="px-4 py-5 sm:p-6 text-center">
                 <p className="text-sm text-gray-500">
-                  This product hasn't been used in any invoices yet.
+                  This product hasn&apos;t been used in any invoices yet.
                 </p>
               </div>
             ) : (

@@ -10,6 +10,7 @@ import { Client, CreateClientFormData } from "@/types";
 import { ArrowLeft, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ApiError } from "@/lib/utils";
 
 export default function EditClientPage({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -82,9 +83,10 @@ export default function EditClientPage({ params }: { params: { id: string } }) {
     try {
       await clientApi.updateClient(parseInt(params.id), formData);
       router.push(`/dashboard/clients/${params.id}`);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const apiError = err as ApiError;
       setError(
-        err.response?.data?.message ||
+        apiError.response?.data?.message ||
           "Failed to update client. Please try again."
       );
     } finally {

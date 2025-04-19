@@ -140,7 +140,7 @@ export default function ClientsPage() {
             ) : (
               <div className="mt-4 flex flex-col items-center">
                 <p className="text-sm text-gray-500 mb-4">
-                  You haven't added any clients yet. Add your first client to
+                  You haven&apos;t added any clients yet. Add your first client to
                   start creating invoices.
                 </p>
                 <Link href="/dashboard/clients/new">

@@ -198,11 +198,6 @@ export interface ApiError {
   statusCode?: number;
 }
 
-// Auth response interface
-export interface AuthResponse {
-  token: string;
-  user: User;
-}
 // File interface
 export interface FileData {
   name: string;

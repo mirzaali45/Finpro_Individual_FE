@@ -1,5 +1,5 @@
 import React from "react";
-import { Invoice, InvoiceStatus } from "@/types";
+import { Invoice } from "@/types";
 import { formatCurrency } from "@/lib/utils";
 import { Chart, ArcElement, Tooltip, Legend } from "chart.js";
 import { Doughnut } from "react-chartjs-2";
@@ -9,6 +9,12 @@ Chart.register(ArcElement, Tooltip, Legend);
 interface InvoiceSummaryProps {
   invoices: Invoice[];
   className?: string;
+}
+
+// Interface for tooltip context
+interface TooltipContext {
+  label: string;
+  parsed: number;
 }
 
 const InvoiceSummary: React.FC<InvoiceSummaryProps> = ({
@@ -90,7 +96,7 @@ const InvoiceSummary: React.FC<InvoiceSummaryProps> = ({
       },
       tooltip: {
         callbacks: {
-          label: function (context: any) {
+          label: function (context: TooltipContext) {
             let label = context.label || "";
             if (label) {
               label += ": ";

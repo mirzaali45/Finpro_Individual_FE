@@ -1,7 +1,7 @@
 "use client";
 
+import { User } from "@/types";
 import Link from "next/link";
-import { User } from "@/types/homeTypes";
 
 interface MobileMenuProps {
   user: User | null;

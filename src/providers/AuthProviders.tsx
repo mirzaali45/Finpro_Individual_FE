@@ -1,7 +1,13 @@
 "use client";
 
 import { authApi } from "@/lib/api";
-import { BankAccount, EWallet, Profile, User } from "@/types/index";
+import {
+  AuthResponse,
+  BankAccount,
+  EWallet,
+  Profile,
+  User,
+} from "@/types/index";
 import {
   createContext,
   useCallback,
@@ -17,12 +23,12 @@ interface AuthContextType {
   eWallets: EWallet[];
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<any>;
+  login: (email: string, password: string) => Promise<AuthResponse | undefined>;
   googleLogin: (credentials: {
     email: string;
     name: string;
     picture: string;
-  }) => Promise<any>;
+  }) => Promise<AuthResponse | undefined>;
   logout: () => void;
   updateUserData: (userData: {
     user: User;

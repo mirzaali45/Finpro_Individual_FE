@@ -33,19 +33,27 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { authApi } from "@/lib/api";
 import { VerifyAccountFormData } from "@/types";
 import Link from "next/link";
 
+// Type for API errors
+interface ApiError {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+  message?: string;
+}
+
 export default function VerifyAccountPage({
   params,
 }: {
   params: { token: string };
 }) {
-  const router = useRouter();
   const { token } = params;
 
   const [isLoading, setIsLoading] = useState(false);
@@ -78,7 +86,8 @@ export default function VerifyAccountPage({
       try {
         await authApi.checkEmailToken(token);
         setTokenValid(true);
-      } catch (err) {
+      } catch {
+        // Unused error parameter replaced with _err
         setTokenValid(false);
         setError(
           "This verification link is invalid or has expired. Please request a new one."
@@ -113,9 +122,10 @@ export default function VerifyAccountPage({
     try {
       await authApi.verifyAccount(token, formData);
       setSuccess(true);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const apiError = err as ApiError;
       setError(
-        err.response?.data?.message ||
+        apiError.response?.data?.message ||
           "Failed to verify account. Please try again or contact support."
       );
     } finally {

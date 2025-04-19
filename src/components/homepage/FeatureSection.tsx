@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 import {
   FileText,
   CreditCard,
-  Clock,
   Globe,
   BarChart2,
   Shield,

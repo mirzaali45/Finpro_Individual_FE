@@ -5,12 +5,11 @@ import Link from "next/link";
 import { MenuIcon, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import MobileMenu from "./mobilemenu";
+import { User } from "@/types";
 
-// Import the Auth context type directly
-import { useAuth } from "@/providers/AuthProviders";
 
 interface HeaderProps {
-  user: any; // Use a more generic type to avoid conflicts
+  user: User | null; // User can be an object or null when not authenticated
 }
 
 export default function Header({ user }: HeaderProps) {

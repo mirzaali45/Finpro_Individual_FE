@@ -90,7 +90,15 @@ export default function InvoicesPage() {
     };
 
     fetchData();
-  }, [searchParams]);
+  }, [
+    searchParams,
+    clientFilter,
+    dateFilter,
+    searchTerm,
+    sortDirection,
+    sortField,
+    statusFilter,
+  ]);
 
   const filterInvoices = (
     data: Invoice[],
@@ -143,26 +151,28 @@ export default function InvoicesPage() {
 
     // Apply sorting
     filtered.sort((a, b) => {
-      let aValue: any, bValue: any;
-
+      // New type-safe sort function
       if (sort === "client_name") {
-        aValue = a.client?.name || "";
-        bValue = b.client?.name || "";
+        const aName = a.client?.name || "";
+        const bName = b.client?.name || "";
+        return direction === "asc"
+          ? aName.localeCompare(bName)
+          : bName.localeCompare(aName);
       } else if (sort === "issue_date" || sort === "due_date") {
-        aValue = new Date(a[sort as keyof Invoice] as string).getTime();
-        bValue = new Date(b[sort as keyof Invoice] as string).getTime();
+        const aDate = new Date(a[sort as keyof Invoice] as string).getTime();
+        const bDate = new Date(b[sort as keyof Invoice] as string).getTime();
+        return direction === "asc" ? aDate - bDate : bDate - aDate;
       } else if (sort === "total_amount") {
-        aValue = Number(a.total_amount);
-        bValue = Number(b.total_amount);
+        const aAmount = Number(a.total_amount);
+        const bAmount = Number(b.total_amount);
+        return direction === "asc" ? aAmount - bAmount : bAmount - aAmount;
       } else {
-        aValue = a[sort as keyof Invoice];
-        bValue = b[sort as keyof Invoice];
-      }
-
-      if (direction === "asc") {
-        return aValue > bValue ? 1 : -1;
-      } else {
-        return aValue < bValue ? 1 : -1;
+        // For other fields like invoice_number or status
+        const aValue = String(a[sort as keyof Invoice] || "");
+        const bValue = String(b[sort as keyof Invoice] || "");
+        return direction === "asc"
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
       }
     });
 
@@ -433,7 +443,7 @@ export default function InvoicesPage() {
                 </>
               ) : (
                 <>
-                  You haven't created any invoices yet. Create your first
+                  You haven&apos;t created any invoices yet. Create your first
                   invoice to get started.
                 </>
               )}

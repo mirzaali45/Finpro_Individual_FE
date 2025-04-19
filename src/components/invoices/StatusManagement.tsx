@@ -1,7 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Invoice } from "@/types";
 import { Clock, CheckCircle, AlertTriangle, Send } from "lucide-react";
-import PaymentForm from "./PaymentForm";
+import PaymentForm, { PaymentFormData } from "./PaymentForm";
+
+interface RouterInterface {
+  push: (url: string) => void;
+}
 
 interface StatusManagementProps {
   invoice: Invoice;
@@ -9,13 +13,13 @@ interface StatusManagementProps {
   onSendReminder?: () => void;
   showPaymentForm: boolean;
   setShowPaymentForm: (show: boolean) => void;
-  paymentFormData: any;
-  setPaymentFormData: (data: any) => void;
+  paymentFormData: PaymentFormData;
+  setPaymentFormData: (data: PaymentFormData) => void;
   handlePaymentSubmit: (e: React.FormEvent) => void;
   isSubmittingPayment: boolean;
   balanceDue: number;
   params: { id: string };
-  router: any;
+  router: RouterInterface;
 }
 
 export default function StatusManagement({

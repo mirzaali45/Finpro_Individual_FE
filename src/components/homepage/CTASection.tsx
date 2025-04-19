@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { User } from '@/types/homeTypes';
+import { User } from '@/types';
 
 interface CtaSectionProps {
   user: User | null;

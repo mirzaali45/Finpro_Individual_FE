@@ -14,10 +14,10 @@ import {
   LogOut,
   Menu,
   X,
-  ClipboardList
+  ClipboardList,
 } from "lucide-react";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import CloudinaryImage from "@/components/cloudinaryImage";
 
 export default function DashboardLayout({
   children,
@@ -216,7 +216,14 @@ export default function DashboardLayout({
                 </span>
                 <div className="h-6 w-6 overflow-hidden rounded-full bg-gray-100">
                   {user?.avatar ? (
-                    <img src={user.avatar} alt={user?.username || "User"} />
+                    <CloudinaryImage
+                      src={user.avatar}
+                      alt={user?.username || "User"}
+                      width={24}
+                      height={24}
+                      className="object-cover"
+                      transformation="thumbnail"
+                    />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center bg-primary text-white text-xs">
                       {user?.username?.charAt(0).toUpperCase() ||

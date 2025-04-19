@@ -25,7 +25,7 @@ export default function RegisterForm() {
         </h3>
         <div className="mt-2 mb-6">
           <p className="text-slate-600">
-            We've sent a verification email to{" "}
+            We&apos;ve sent a verification email to{" "}
             <span className="font-semibold">{email}</span>.
             <br />
             Please check your inbox to complete your registration.
@@ -75,7 +75,7 @@ export default function RegisterForm() {
             className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
           <p className="mt-2 text-sm text-slate-500">
-            We'll send you a verification email to complete your registration.
+            We will send you a verification email to complete your registration.
           </p>
         </div>
 

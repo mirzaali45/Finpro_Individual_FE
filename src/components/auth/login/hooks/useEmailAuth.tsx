@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/providers/AuthProviders";
+import { ApiError } from "@/lib/utils";
 
 export function useEmailAuth() {
   const [email, setEmail] = useState("");
@@ -20,9 +21,10 @@ export function useEmailAuth() {
     try {
       await login(email, password);
       router.push("/dashboard");
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const apiError = err as ApiError;
       setError(
-        err.response?.data?.message || "Failed to login. Please try again."
+        apiError.response?.data?.message || "Failed to login. Please try again."
       );
     } finally {
       setIsLoading(false);

@@ -1,4 +1,4 @@
-// src/app/(auth)/verify-chang-email/[token]/page.tsx
+// src/app/(auth)/verify-change-email/[token]/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -7,7 +7,23 @@ import { authApi } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Mail, CheckCircle, XCircle } from "lucide-react";
 
-// Untuk App Router dengan parameter dinamis
+// Type for API errors
+interface ApiError {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+  message?: string;
+}
+
+// Interface for API response
+interface VerifyEmailResponse {
+  status: string;
+  message?: string;
+}
+
+// For App Router with dynamic parameters
 interface VerifyEmailChangeParams {
   params: {
     token: string;
@@ -32,8 +48,10 @@ export default function VerifyEmailChange({ params }: VerifyEmailChangeParams) {
       }
 
       try {
-        // Mengirim token langsung sebagai string, bukan sebagai objek
-        const response = await authApi.verifyChangeEmail(token);
+        // Sending token directly as a string, not as an object
+        const response = (await authApi.verifyChangeEmail(
+          token
+        )) as VerifyEmailResponse;
         if (response && response.status === "success") {
           setStatus("success");
           setMessage(
@@ -44,12 +62,13 @@ export default function VerifyEmailChange({ params }: VerifyEmailChangeParams) {
             response?.message || "Failed to verify email change."
           );
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Email verification error:", err);
+        const apiError = err as ApiError;
         setStatus("error");
         setMessage(
-          err.response?.data?.message ||
-            err.message ||
+          apiError.response?.data?.message ||
+            apiError.message ||
             "Failed to verify email change. The token may be invalid or expired."
         );
       }

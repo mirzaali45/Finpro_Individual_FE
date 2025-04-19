@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { authApi } from "@/lib/api";
 import { VerifyAccountFormData } from "@/types";
+import { ApiError } from "@/lib/utils";
 
 export function useVerifyForm(token: string) {
   const [isLoading, setIsLoading] = useState(false);
@@ -46,9 +47,10 @@ export function useVerifyForm(token: string) {
     try {
       await authApi.verifyAccount(token, formData);
       setSuccess(true);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const apiError = err as ApiError;
       setError(
-        err.response?.data?.message ||
+        apiError.response?.data?.message ||
           "Failed to verify account. Please try again or contact support."
       );
     } finally {

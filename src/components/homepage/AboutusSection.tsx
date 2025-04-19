@@ -39,7 +39,7 @@ export default function AboutUsSection() {
             <h3 className="text-2xl font-bold text-gray-900 mb-6">Our Story</h3>
             <p className="text-gray-600 mb-6">
               Founded in 2022, InvoicePro was born from a simple idea: invoicing
-              shouldn't be complicated. Our founders, experienced small business
+              shouldn&apos;t be complicated. Our founders, experienced small business
               owners themselves, were frustrated with the existing solutions
               that were either too complex or too basic for their needs.
             </p>

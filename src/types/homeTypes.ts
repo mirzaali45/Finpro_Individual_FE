@@ -1,14 +1,20 @@
 // This should match your existing User type from src/types/index.ts
 // Since your app already has a User type defined, we'll use that one
-// and not add properties like 'id' that might not exist in your existing User type
-export interface User {
-  // We're not defining specific properties here to avoid conflicts
-  // Use your existing User type
-  [key: string]: any;
+
+import { ReactNode } from "react";
+
+// Create a proper interface without any type
+export interface HomeUser {
+  // Define specific properties that are used in the home page context
+  id?: number | string;
+  name?: string;
+  email?: string;
+  avatar?: string;
+  username?: string;
 }
 
 export interface FeatureItem {
-  icon: React.ReactNode;
+  icon: ReactNode;
   title: string;
   description: string;
   color: string;

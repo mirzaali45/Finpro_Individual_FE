@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { ApiError } from "@/lib/utils";
 
 export default function NewClientPage() {
   const router = useRouter();
@@ -47,9 +48,10 @@ export default function NewClientPage() {
     try {
       await clientApi.createClient(formData);
       router.push("/dashboard/clients");
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const apiError = err as ApiError;
       setError(
-        err.response?.data?.message ||
+        apiError.response?.data?.message ||
           "Failed to create client. Please try again."
       );
     } finally {

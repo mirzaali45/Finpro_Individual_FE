@@ -15,7 +15,7 @@ import {
   Product,
   RecurringPattern,
 } from "@/types";
-import { formatCurrency } from "@/lib/utils";
+import { ApiError, formatCurrency } from "@/lib/utils";
 
 export default function NewInvoicePage() {
   const router = useRouter();
@@ -128,11 +128,15 @@ export default function NewInvoicePage() {
     }
   };
 
-  const handleItemChange = (index: number, field: string, value: any) => {
+  const handleItemChange = (
+    index: number,
+    field: string,
+    value: string | number
+  ) => {
     const updatedItems = [...formData.items];
     updatedItems[index] = {
       ...updatedItems[index],
-      [field]: field === "quantity" ? parseInt(value) || 0 : value,
+      [field]: field === "quantity" ? parseInt(value.toString()) || 0 : value,
     };
     setFormData({
       ...formData,
@@ -242,14 +246,14 @@ export default function NewInvoicePage() {
 
       // Jika pengiriman email berhasil atau tidak diperlukan, arahkan ke halaman detail invoice
       router.push(`/dashboard/invoices/${invoice.invoice_id}`);
-    } catch (err: any) {
-      console.error("Invoice creation error:", err);
+    } catch (err: unknown) {
+      const apiError = err as ApiError;
       let errorMessage = "Failed to create invoice. Please try again.";
 
-      if (err.response?.data?.message) {
-        errorMessage = err.response.data.message;
-      } else if (err.message) {
-        errorMessage = err.message;
+      if (apiError.response?.data?.message) {
+        errorMessage = apiError.response.data.message;
+      } else if (apiError.message) {
+        errorMessage = apiError.message;
       }
 
       setError(errorMessage);

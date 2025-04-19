@@ -61,19 +61,34 @@ export function generateInvoiceNumber(): string {
   return `${prefix}-${timestamp}-${random}`;
 }
 
-export function debounce<T extends (...args: any[]) => any>(
+// Define a more specific type for the debounce function
+type DebouncedFunction<T extends (...args: unknown[]) => void> = (
+  ...args: Parameters<T>
+) => void;
+
+export function debounce<T extends (...args: unknown[]) => void>(
   func: T,
   wait: number
-): (...args: Parameters<T>) => void {
+): DebouncedFunction<T> {
   let timeout: NodeJS.Timeout | null = null;
 
-  return function (...args: Parameters<T>) {
+  return function (this: unknown, ...args: Parameters<T>) {
     const later = () => {
       timeout = null;
-      func(...args);
+      func.apply(this, args);
     };
 
     if (timeout) clearTimeout(timeout);
     timeout = setTimeout(later, wait);
   };
+}
+
+// Type for API errors
+export interface ApiError {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+  message?: string;
 }

@@ -13,7 +13,7 @@ export function useVerifyToken(token: string) {
       try {
         await authApi.checkEmailToken(token);
         setTokenValid(true);
-      } catch (err) {
+      } catch {
         setTokenValid(false);
         setError(
           "This verification link is invalid or has expired. Please request a new one."

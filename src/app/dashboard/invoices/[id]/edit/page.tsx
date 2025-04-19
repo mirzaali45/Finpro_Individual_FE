@@ -16,7 +16,7 @@ import {
   Product,
   RecurringPattern,
 } from "@/types";
-import { formatCurrency } from "@/lib/utils";
+import { ApiError, formatCurrency } from "@/lib/utils";
 import InvoiceItemForm from "@/components/invoices/invoiceItemForm";
 
 export default function EditInvoicePage({
@@ -265,9 +265,10 @@ export default function EditInvoicePage({
       }
 
       router.push(`/dashboard/invoices/${params.id}`);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const apiError = err as ApiError;
       setError(
-        err.response?.data?.message ||
+        apiError.response?.data?.message ||
           "Failed to update invoice. Please try again."
       );
     } finally {

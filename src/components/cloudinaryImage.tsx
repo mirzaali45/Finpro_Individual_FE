@@ -1,3 +1,4 @@
+import Image from "next/image";
 import React from "react";
 
 interface CloudinaryImageProps {
@@ -62,7 +63,7 @@ const CloudinaryImage: React.FC<CloudinaryImageProps> = ({
   };
 
   return (
-    <img
+    <Image
       src={getTransformedUrl(src)}
       alt={alt}
       width={width}

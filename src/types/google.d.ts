@@ -24,12 +24,60 @@ interface Window {
             ) => void;
           };
           oauth2: {
-            initTokenClient: (config: any) => any;
-            GoogleAuth: (config: any) => any;
+            initTokenClient: (config: GoogleOauth2Config) => GoogleTokenClient;
+            GoogleAuth: (config: GoogleAuthClientConfig) => GoogleAuthClient;
           };
         };
       }
     | undefined;
+}
+
+// Interface for OAuth2 configuration
+interface GoogleOauth2Config {
+  client_id: string;
+  scope: string;
+  callback: (response: GoogleTokenResponse) => void;
+  [key: string]: unknown;
+}
+
+// Interface for Google Auth client config
+interface GoogleAuthClientConfig {
+  client_id: string;
+  scope: string;
+  [key: string]: unknown;
+}
+
+// Interface for token client
+interface GoogleTokenClient {
+  requestAccessToken: (options?: { prompt?: string }) => void;
+  [key: string]: unknown;
+}
+
+// Interface for auth client
+interface GoogleAuthClient {
+  signIn: () => Promise<GoogleUser>;
+  [key: string]: unknown;
+}
+
+// Interface for token response
+interface GoogleTokenResponse {
+  access_token: string;
+  expires_in: number;
+  scope: string;
+  token_type: string;
+  [key: string]: unknown;
+}
+
+interface GoogleUser {
+  getBasicProfile: () => GoogleUserProfile;
+  [key: string]: unknown;
+}
+
+interface GoogleUserProfile {
+  getId: () => string;
+  getName: () => string;
+  getEmail: () => string;
+  [key: string]: unknown;
 }
 
 // Type definitions for Google Identity Services
@@ -40,7 +88,7 @@ interface GoogleAuthConfig {
   auto_select?: boolean;
   itp_support?: boolean;
   login_uri?: string;
-  native_callback?: (response: any) => void;
+  native_callback?: (response: GoogleNativeResponse) => void;
   cancel_on_tap_outside?: boolean;
   prompt_parent_id?: string;
   nonce?: string;
@@ -49,6 +97,13 @@ interface GoogleAuthConfig {
   allowed_parent_origin?: string | string[];
   intermediate_iframe_close_callback?: () => void;
   error_callback?: (error: GoogleErrorResponse) => void;
+}
+
+interface GoogleNativeResponse {
+  id: string;
+  email: string;
+  name: string;
+  [key: string]: unknown;
 }
 
 interface GoogleCredentialResponse {

@@ -3,6 +3,7 @@
 import { Invoice } from "@/types";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { useEffect, useState } from "react";
+import Image from "next/image";
 
 interface InvoicePrintProps {
   invoice: Invoice;
@@ -58,7 +59,7 @@ export default function InvoicePrint({
       <div className="flex justify-between items-start mb-8">
         <div>
           {companyLogo ? (
-            <img src={companyLogo} alt="Company Logo" className="h-16 mb-2" />
+            <Image src={companyLogo} alt="Company Logo" className="h-16 mb-2" />
           ) : (
             <h1 className="text-2xl font-bold text-gray-900">
               {companyName || "Your Company"}

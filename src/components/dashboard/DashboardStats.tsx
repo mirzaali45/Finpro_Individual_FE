@@ -1,8 +1,6 @@
 import {
   DollarSign,
-  Clock,
   CheckCircle,
-  Users,
   FileText,
   AlertTriangle,
 } from "lucide-react";
@@ -25,7 +23,6 @@ export default function DashboardStats({
   paid,
   totalInvoices,
   draftCount,
-  clientCount,
   isLoading,
 }: DashboardStatsProps) {
   if (isLoading) {

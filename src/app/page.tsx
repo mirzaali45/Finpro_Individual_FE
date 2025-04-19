@@ -1,15 +1,13 @@
 'use client';
 
 import { useAuth } from "@/providers/AuthProviders";
-import { 
-  HeroSection,
-  FeaturesSection,
-  TestimonialsSection,
-  AboutUsSection,
-  CtaSection
-} from "./home/page";
 import Header from "../components/header";
 import Footer from "../components/Footer";
+import HeroSection from "@/components/homepage/HeroSection";
+import FeaturesSection from "@/components/homepage/FeatureSection";
+import TestimonialsSection from "@/components/homepage/TestimonialSection";
+import AboutUsSection from "@/components/homepage/AboutusSection";
+import CtaSection from "@/components/homepage/CTASection";
 
 export default function Home() {
   const { user } = useAuth();
