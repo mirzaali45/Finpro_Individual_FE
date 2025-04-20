@@ -59,7 +59,13 @@ export default function InvoicePrint({
       <div className="flex justify-between items-start mb-8">
         <div>
           {companyLogo ? (
-            <Image src={companyLogo} alt="Company Logo" className="h-16 mb-2" />
+            <Image
+              src={companyLogo}
+              alt="Company Logo"
+              width={96}
+              height={96}
+              className="h-16 mb-2"
+            />
           ) : (
             <h1 className="text-2xl font-bold text-gray-900">
               {companyName || "Your Company"}

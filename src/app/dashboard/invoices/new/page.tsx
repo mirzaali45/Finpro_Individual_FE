@@ -172,6 +172,8 @@ export default function NewInvoicePage() {
     });
   };
 
+  // Perbaikan pada fungsi handleSubmit di src/app/dashboard/invoices/new/page.tsx
+
   const handleSubmit = async (
     e: React.FormEvent,
     status: InvoiceStatus = "DRAFT"
@@ -192,21 +194,28 @@ export default function NewInvoicePage() {
     setError("");
 
     try {
-      // Prepare data to send to API
+      // Prepare data to send to API - pastikan semua nilai yang dikirim memiliki tipe data yang konsisten
       const invoiceData = {
         ...formData,
+        client_id: Number(formData.client_id), // Pastikan client_id adalah number
         subtotal,
         tax_amount: taxAmount,
         total_amount: totalAmount,
+        items: formData.items.map((item) => ({
+          ...item,
+          product_id: Number(item.product_id), // Pastikan product_id adalah number
+          quantity: Number(item.quantity), // Pastikan quantity adalah number
+        })),
       };
 
       let invoice;
 
-      // If status is PENDING, we're sending the invoice to the client
+      // Jika status adalah PENDING, kita kirim invoice ke client
       if (status === "PENDING") {
-        // Buat invoice terlebih dahulu
+        // Buat invoice terlebih dahulu dengan status yang eksplisit
         invoice = await invoiceApi.createInvoice({
           ...invoiceData,
+          status: "PENDING", // Set status secara eksplisit
         });
 
         // Kemudian kirim email
@@ -220,31 +229,57 @@ export default function NewInvoicePage() {
           );
         }
       } else {
-        // Buat invoice tanpa mengirim email
+        // Buat invoice tanpa mengirim email, dengan status yang eksplisit
         invoice = await invoiceApi.createInvoice({
           ...invoiceData,
+          status: status, // Set status secara eksplisit
         });
       }
 
-      // If recurring, create recurring invoice
+      // Jika recurring, buat recurring invoice
       if (formData.is_recurring && formData.recurring_pattern) {
-        // Calculate next invoice date based on pattern
-        const nextInvoiceDate = getNextInvoiceDate(
-          new Date(formData.due_date),
-          formData.recurring_pattern
-        );
+        try {
+          console.log("Creating recurring invoice:", {
+            pattern: formData.recurring_pattern,
+            client_id: formData.client_id,
+          });
 
-        // Create recurring invoice record
-        await invoiceApi.createRecurringInvoice({
-          client_id: formData.client_id,
-          pattern: formData.recurring_pattern,
-          next_invoice_date: nextInvoiceDate.toISOString(),
-          items: formData.items,
-          source_invoice_id: invoice.invoice_id,
-        });
+          // Hitung next invoice date
+          const nextInvoiceDate = getNextInvoiceDate(
+            new Date(formData.due_date),
+            formData.recurring_pattern
+          );
+
+          // Format tanggal dengan benar untuk API
+          const formattedNextDate = nextInvoiceDate.toISOString();
+
+          // Buat data untuk recurring invoice dengan tipe data yang eksplisit
+          const recurringData = {
+            client_id: Number(formData.client_id),
+            pattern: formData.recurring_pattern,
+            next_invoice_date: formattedNextDate,
+            items: formData.items.map((item) => ({
+              product_id: Number(item.product_id),
+              quantity: Number(item.quantity),
+              description: item.description || "",
+            })),
+            source_invoice_id: invoice.invoice_id,
+          };
+
+          console.log("Sending recurring data:", JSON.stringify(recurringData));
+
+          // Buat recurring invoice
+          await invoiceApi.createRecurringInvoice(recurringData);
+        } catch (recurringError) {
+          console.error("Error creating recurring invoice:", recurringError);
+          // Meskipun recurring gagal, invoice utama tetap berhasil dibuat
+          setSuccessMessage(
+            "Invoice created, but failed to set up recurring schedule."
+          );
+        }
       }
 
-      // Jika pengiriman email berhasil atau tidak diperlukan, arahkan ke halaman detail invoice
+      // Arahkan ke halaman detail invoice
       router.push(`/dashboard/invoices/${invoice.invoice_id}`);
     } catch (err: unknown) {
       const apiError = err as ApiError;
@@ -257,40 +292,61 @@ export default function NewInvoicePage() {
       }
 
       setError(errorMessage);
+      console.error("Invoice creation error:", err);
     } finally {
       setIsLoading(false);
     }
   };
 
   // Helper function to calculate next invoice date based on pattern
+  // Perbaikan pada fungsi getNextInvoiceDate
   const getNextInvoiceDate = (
     baseDate: Date,
     pattern: RecurringPattern
   ): Date => {
+    // Pastikan baseDate adalah objek Date yang valid
     const nextDate = new Date(baseDate);
 
-    switch (pattern) {
-      case "WEEKLY":
-        nextDate.setDate(nextDate.getDate() + 7);
-        break;
-      case "BIWEEKLY":
-        nextDate.setDate(nextDate.getDate() + 14);
-        break;
-      case "MONTHLY":
-        nextDate.setMonth(nextDate.getMonth() + 1);
-        break;
-      case "QUARTERLY":
-        nextDate.setMonth(nextDate.getMonth() + 3);
-        break;
-      case "SEMIANNUALLY":
-        nextDate.setMonth(nextDate.getMonth() + 6);
-        break;
-      case "ANNUALLY":
-        nextDate.setFullYear(nextDate.getFullYear() + 1);
-        break;
+    if (isNaN(nextDate.getTime())) {
+      console.error("Invalid date provided to getNextInvoiceDate:", baseDate);
+      // Jika tanggal tidak valid, gunakan tanggal sekarang
+      return new Date();
     }
 
-    return nextDate;
+    try {
+      switch (pattern) {
+        case "WEEKLY":
+          nextDate.setDate(nextDate.getDate() + 7);
+          break;
+        case "BIWEEKLY":
+          nextDate.setDate(nextDate.getDate() + 14);
+          break;
+        case "MONTHLY":
+          nextDate.setMonth(nextDate.getMonth() + 1);
+          break;
+        case "QUARTERLY":
+          nextDate.setMonth(nextDate.getMonth() + 3);
+          break;
+        case "SEMIANNUALLY":
+          nextDate.setMonth(nextDate.getMonth() + 6);
+          break;
+        case "ANNUALLY":
+          nextDate.setFullYear(nextDate.getFullYear() + 1);
+          break;
+        default:
+          console.warn(`Unknown pattern: ${pattern}, defaulting to MONTHLY`);
+          nextDate.setMonth(nextDate.getMonth() + 1);
+      }
+
+      console.log(`Next date calculated for pattern ${pattern}:`, nextDate);
+      return nextDate;
+    } catch (error) {
+      console.error("Error calculating next invoice date:", error);
+      // Return safe fallback
+      const fallback = new Date();
+      fallback.setMonth(fallback.getMonth() + 1);
+      return fallback;
+    }
   };
 
   if (isLoading && (!clients.length || !products.length)) {
