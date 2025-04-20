@@ -520,11 +520,51 @@ export const invoiceApi = {
     return response.data.recurringInvoice;
   },
 
+  // createRecurringInvoice: async (
+  //   data: CreateRecurringInvoiceData
+  // ): Promise<RecurringInvoice> => {
+  //   const response = await apiClient.post("/recurring-invoices", data);
+  //   return response.data.recurringInvoice;
+  // },
+  // Perbaikan pada fungsi createRecurringInvoice di api.ts
   createRecurringInvoice: async (
     data: CreateRecurringInvoiceData
   ): Promise<RecurringInvoice> => {
-    const response = await apiClient.post("/recurring-invoices", data);
-    return response.data.recurringInvoice;
+    try {
+      console.log(
+        "Creating recurring invoice with data:",
+        JSON.stringify({
+          ...data,
+          // Hindari logging data lengkap untuk keamanan
+          items: data.items ? `[${data.items.length} items]` : "no items",
+        })
+      );
+
+      // Pastikan data memiliki format yang benar
+      const formattedData = {
+        client_id: Number(data.client_id),
+        pattern: data.pattern,
+        next_invoice_date: data.next_invoice_date,
+        items: data.items.map((item) => ({
+          product_id: Number(item.product_id),
+          quantity: Number(item.quantity),
+          description: item.description || "",
+        })),
+        source_invoice_id: data.source_invoice_id
+          ? Number(data.source_invoice_id)
+          : undefined,
+      };
+
+      const response = await apiClient.post(
+        "/recurring-invoices",
+        formattedData
+      );
+      console.log("Recurring invoice created successfully");
+      return response.data.recurringInvoice;
+    } catch (error) {
+      console.error("Error creating recurring invoice:", error);
+      throw error;
+    }
   },
 
   updateRecurringInvoice: async (
