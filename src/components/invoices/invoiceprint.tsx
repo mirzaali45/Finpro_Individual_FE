@@ -62,8 +62,8 @@ export default function InvoicePrint({
             <Image
               src={companyLogo}
               alt="Company Logo"
-              width={96}
-              height={96}
+              width={60}
+              height={100}
               className="h-16 mb-2"
             />
           ) : (

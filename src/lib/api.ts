@@ -27,7 +27,7 @@ import {
 } from "@/types";
 
 const API_URL =
-  process.env.NEXT_PUBLIC_BASE_URL_BE || "http://localhost:8000/api";
+  process.env.NEXT_PUBLIC_BASE_URL_BE;
 
 const apiClient = axios.create({
   baseURL: API_URL,
@@ -51,9 +51,24 @@ apiClient.interceptors.request.use(
 );
 
 // Add response interceptor for better error handling
+// apiClient.interceptors.response.use(
+//   (response) => response,
+//   (error) => {
+//     return Promise.reject(error);
+//   }
+// );
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Logging error
+    if (error.response) {
+      console.error(`API Error: ${error.response.status}`, error.response.data);
+    } else if (error.request) {
+      console.error('API Request Error: No response received', error.request);
+    } else {
+      console.error('API Error:', error.message);
+    }
+    
     return Promise.reject(error);
   }
 );
@@ -400,8 +415,15 @@ export const productApi = {
     }
   },
 
+  // deleteProduct: async (id: number): Promise<void> => {
+  //   await apiClient.delete(`/products/${id}`);
+  // },
   deleteProduct: async (id: number): Promise<void> => {
-    await apiClient.delete(`/products/${id}`);
+    try {
+      await apiClient.delete(`/products/${id}`);
+    } catch (error) {
+      throw error; // Re-throw atau tangani dengan cara yang sesuai
+    }
   },
 
   // Archive a product (soft delete)
@@ -520,13 +542,6 @@ export const invoiceApi = {
     return response.data.recurringInvoice;
   },
 
-  // createRecurringInvoice: async (
-  //   data: CreateRecurringInvoiceData
-  // ): Promise<RecurringInvoice> => {
-  //   const response = await apiClient.post("/recurring-invoices", data);
-  //   return response.data.recurringInvoice;
-  // },
-  // Perbaikan pada fungsi createRecurringInvoice di api.ts
   createRecurringInvoice: async (
     data: CreateRecurringInvoiceData
   ): Promise<RecurringInvoice> => {

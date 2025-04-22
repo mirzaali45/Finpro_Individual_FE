@@ -15,6 +15,7 @@ import {
   Menu,
   X,
   ClipboardList,
+  Undo2,
 } from "lucide-react";
 import { useState } from "react";
 import CloudinaryImage from "@/components/cloudinaryImage";
@@ -57,7 +58,7 @@ export default function DashboardLayout({
 
   const userNavigation = [
     { name: "Profile", href: "/dashboard/profile", icon: Settings },
-    { name: "Back to home", href: "/", icon: Settings },
+    { name: "Back to home", href: "/", icon: Undo2 },
     {
       name: "Sign out",
       href: "#",
@@ -80,7 +81,7 @@ export default function DashboardLayout({
       >
         <div className="fixed inset-y-0 left-0 z-50 w-full overflow-y-auto bg-white px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
           <div className="flex items-center justify-between">
-            <span className="text-xl font-bold">Invoice Management</span>
+            <span className="text-xl font-bold">InvoicePro</span>
             <button
               type="button"
               className="-m-2.5 rounded-md p-2.5 text-gray-700"
@@ -147,7 +148,7 @@ export default function DashboardLayout({
       {/* Desktop sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:block lg:w-64 lg:overflow-y-auto lg:bg-white lg:pb-4 lg:pt-5">
         <div className="flex h-16 shrink-0 items-center px-6">
-          <span className="text-xl font-bold">Invoice Management</span>
+          <span className="text-xl font-bold">InvoicePro</span>
         </div>
         <nav className="mt-5 space-y-1 px-3">
           {navigation.map((item) => (
