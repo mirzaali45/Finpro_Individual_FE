@@ -15,7 +15,7 @@ interface InvoiceListProps {
 export default function InvoiceList({
   invoices,
   sortField,
-  sortDirection,
+  // sortDirection,
   onSortChange,
 }: InvoiceListProps) {
   // Status colors

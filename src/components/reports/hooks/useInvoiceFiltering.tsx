@@ -19,7 +19,7 @@ export function useInvoiceFiltering(allInvoices: Invoice[]) {
   const [sortField, setSortField] = useState<string>("issue_date");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
-  // Apply filters when invoices change
+  // Apply filters when dependencies change
   useEffect(() => {
     if (allInvoices.length > 0) {
       applyFilters(
@@ -33,7 +33,14 @@ export function useInvoiceFiltering(allInvoices: Invoice[]) {
     } else {
       setFilteredInvoices([]);
     }
-  }, [allInvoices]);
+  }, [
+    allInvoices,
+    dateRange,
+    clientFilter,
+    statusFilter,
+    sortField,
+    sortDirection,
+  ]);
 
   const applyFilters = (
     data: Invoice[],

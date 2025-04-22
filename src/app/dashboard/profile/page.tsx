@@ -1,6 +1,6 @@
 // src/app/dashboard/profile/page.tsx
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/providers/AuthProviders";
 import { UpdateProfileFormData } from "@/types";
 import { Button } from "@/components/ui/button";

@@ -1,7 +1,7 @@
 // src/components/profile/PersonalInfoTab.tsx
 "use client";
 
-import { useState, useRef, ChangeEvent } from "react";
+import { useRef, ChangeEvent } from "react";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";

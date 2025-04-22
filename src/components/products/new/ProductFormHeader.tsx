@@ -11,8 +11,7 @@ interface ProductFormHeaderProps {
 
 export default function ProductFormHeader({
   title,
-  backUrl,
-  error, // Accept error prop
+  backUrl, // Accept error prop
 }: ProductFormHeaderProps) {
   return (
     <div className="flex items-center gap-4">

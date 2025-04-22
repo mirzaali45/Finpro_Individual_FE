@@ -13,7 +13,6 @@ interface ProductImageUploadProps {
 }
 
 export default function ProductImageUpload({
-  selectedImage,
   previewUrl,
   handleImageChange,
   handleRemoveImage,

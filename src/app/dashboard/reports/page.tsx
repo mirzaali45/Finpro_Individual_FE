@@ -29,7 +29,6 @@ export default function ReportsPage() {
     setStatusFilter,
     sortField,
     sortDirection,
-    applyFilters,
     handleFilterChange,
     handleSortChange,
   } = useInvoiceFiltering(invoices);
