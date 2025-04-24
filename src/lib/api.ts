@@ -26,8 +26,7 @@ import {
   VerifyResetPasswordFormData,
 } from "@/types";
 
-const API_URL =
-  process.env.NEXT_PUBLIC_BASE_URL_BE;
+const API_URL = process.env.NEXT_PUBLIC_BASE_URL_BE;
 
 const apiClient = axios.create({
   baseURL: API_URL,
@@ -64,11 +63,11 @@ apiClient.interceptors.response.use(
     if (error.response) {
       console.error(`API Error: ${error.response.status}`, error.response.data);
     } else if (error.request) {
-      console.error('API Request Error: No response received', error.request);
+      console.error("API Request Error: No response received", error.request);
     } else {
-      console.error('API Error:', error.message);
+      console.error("API Error:", error.message);
     }
-    
+
     return Promise.reject(error);
   }
 );
@@ -148,13 +147,32 @@ export const authApi = {
     return response.data;
   },
 
+  // getProfile: async (): Promise<{
+  //   status: string;
+  //   user: User;
+  //   profile: Profile | null;
+  // }> => {
+  //   const response = await apiClient.get("/auth/profile");
+  //   return response.data;
+  // },
   getProfile: async (): Promise<{
     status: string;
     user: User;
     profile: Profile | null;
+    bankAccounts: BankAccount[];
+    eWallets: EWallet[];
   }> => {
     const response = await apiClient.get("/auth/profile");
-    return response.data;
+
+    // Extract bank accounts and e-wallets for easier access
+    const bankAccounts = response.data.profile?.bank_accounts || [];
+    const eWallets = response.data.profile?.e_wallets || [];
+
+    return {
+      ...response.data,
+      bankAccounts,
+      eWallets,
+    };
   },
 
   // Define a type for File input
@@ -323,26 +341,21 @@ export const clientApi = {
 export const productApi = {
   // Get all products
   // Get all products
-  getProducts: async (showArchivedProducts?: boolean): Promise<Product[]> => {
+  getProducts: async (showArchivedProducts = false): Promise<Product[]> => {
     try {
-      const response = await apiClient.get(`/products`);
+      // Gunakan parameter query yang sesuai dengan backend (includeDeleted)
+      const response = await apiClient.get(
+        `/products?includeDeleted=${showArchivedProducts}`
+      );
       let products: Product[] = [];
-
-      // Handle different response formats
+      // Handle berbagai format respons
       if (Array.isArray(response.data)) {
         products = response.data;
       } else if (response.data.products) {
         products = response.data.products;
       }
-
-      // Filter out archived products if not explicitly requested to show them
-      if (showArchivedProducts === false) {
-        return products.filter((product) => !product.deleted_at);
-      }
-
       return products;
     } catch (error) {
-      console.error("Error fetching products:", error);
       throw error;
     }
   },
@@ -358,7 +371,6 @@ export const productApi = {
         return response.data;
       }
     } catch (error) {
-      console.error(`Error fetching product ${id}:`, error);
       throw error;
     }
   },
@@ -368,10 +380,6 @@ export const productApi = {
     return response.data.product;
   },
 
-  /**
-   * Create a new product with image
-   * Uses FormData to support file uploads
-   */
   async createProductWithImage(formData: FormData): Promise<Product> {
     const response = await apiClient.post("/products/with-image", formData, {
       headers: {
@@ -428,13 +436,13 @@ export const productApi = {
 
   // Archive a product (soft delete)
   archiveProduct: async (id: number): Promise<Product> => {
-    const response = await apiClient.post(`/products/${id}/archive`);
+    const response = await apiClient.put(`/products/${id}/archive`);
     return response.data.product || response.data; // Handle both response formats
   },
 
   // Restore an archived product
   restoreProduct: async (id: number): Promise<Product> => {
-    const response = await apiClient.post(`/products/${id}/restore`);
+    const response = await apiClient.put(`/products/${id}/restore`);
     return response.data.product || response.data; // Handle both response formats
   },
 
@@ -514,9 +522,67 @@ export const invoiceApi = {
     await apiClient.delete(`/invoices/${id}`);
   },
 
+  // addPayment: async (data: CreatePaymentFormData): Promise<Payment> => {
+  //   const response = await apiClient.post("/invoices/payments", data);
+  //   return response.data.payment;
+  // },
   addPayment: async (data: CreatePaymentFormData): Promise<Payment> => {
-    const response = await apiClient.post("/invoices/payments", data);
-    return response.data.payment;
+    try {
+      // Ensure all required fields are present
+      if (
+        !data.invoice_id ||
+        data.amount === undefined ||
+        !data.payment_date ||
+        !data.payment_method
+      ) {
+        throw new Error("Missing required payment information");
+      }
+
+      // Create a payment data object with all the fields
+      const paymentData = {
+        invoice_id: data.invoice_id,
+        amount: data.amount,
+        payment_date: data.payment_date,
+        payment_method: data.payment_method,
+        reference: data.reference || "",
+        notes: data.notes || "",
+      };
+
+      // Add the appropriate payment method details
+      if (data.payment_method === "BANK_TRANSFER") {
+        if (!data.bank_account_id) {
+          console.warn(
+            "Bank transfer selected but no bank account ID provided"
+          );
+        } else {
+          // Add bank account ID to the payment data
+          Object.assign(paymentData, { bank_account_id: data.bank_account_id });
+        }
+      } else if (data.payment_method === "E_WALLET") {
+        if (!data.e_wallet_id) {
+          console.warn("E-wallet selected but no e-wallet ID provided");
+        } else {
+          // Add e-wallet ID to the payment data
+          Object.assign(paymentData, { e_wallet_id: data.e_wallet_id });
+        }
+      }
+
+      console.log(
+        "Sending payment data:",
+        JSON.stringify(paymentData, null, 2)
+      );
+
+      // Make the API request
+      const response = await apiClient.post("/invoices/payments", paymentData);
+
+      // Log the response for debugging
+      console.log("Payment response:", JSON.stringify(response.data, null, 2));
+
+      return response.data.payment;
+    } catch (error) {
+      console.error("Error adding payment:", error);
+      throw error;
+    }
   },
 
   getInvoicePayments: async (invoiceId: number): Promise<Payment[]> => {

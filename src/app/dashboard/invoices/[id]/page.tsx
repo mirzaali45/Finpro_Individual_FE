@@ -1,4 +1,4 @@
-//src/app/dashboard/invoices/[id]/page.tsx
+// //src/app/dashboard/invoices/[id]/page.tsx
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -18,11 +18,12 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { invoiceApi } from "@/lib/api";
-import { Invoice, PaymentMethod } from "@/types";
+import { invoiceApi, authApi } from "@/lib/api";
+import { Invoice, PaymentMethod, BankAccount, EWallet } from "@/types";
 import InvoicePrint from "@/components/invoices/invoiceprint";
 import InvoiceContent from "@/components/invoices/InvoiceContent";
 import StatusManagement from "@/components/invoices/StatusManagement";
+import { PaymentFormData } from "@/components/invoices/PaymentForm";
 import { useAuth } from "@/providers/AuthProviders";
 
 export default function InvoiceDetailPage({
@@ -37,15 +38,19 @@ export default function InvoiceDetailPage({
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [showPaymentForm, setShowPaymentForm] = useState(false);
-  const [paymentFormData, setPaymentFormData] = useState({
+  const [paymentFormData, setPaymentFormData] = useState<PaymentFormData>({
     amount: 0,
     payment_date: new Date().toISOString().split("T")[0],
     payment_method: "BANK_TRANSFER" as PaymentMethod,
     reference: "",
     notes: "",
+    bank_account_id: undefined,
+    e_wallet_id: undefined,
   });
   const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
   const [showActionsMenu, setShowActionsMenu] = useState(false);
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
+  const [eWallets, setEWallets] = useState<EWallet[]>([]);
   const actionsMenuRef = useRef<HTMLDivElement>(null);
   const printRef = useRef<HTMLDivElement>(null);
 
@@ -57,6 +62,46 @@ export default function InvoiceDetailPage({
     PARTIAL: "bg-yellow-100 text-yellow-800",
     OVERDUE: "bg-red-100 text-red-800",
     CANCELLED: "bg-gray-100 text-gray-800",
+  };
+
+  // Fetch payment methods
+  const fetchPaymentMethods = async () => {
+    try {
+      const profileData = await authApi.getProfile();
+      if (profileData && profileData.user) {
+        // Get bank accounts and e-wallets from profile
+        const bankAccts = profileData.profile?.bank_accounts || [];
+        const wallets = profileData.profile?.e_wallets || [];
+
+        setBankAccounts(bankAccts);
+        setEWallets(wallets);
+
+        // Set default payment method based on available methods
+        if (bankAccts.length > 0) {
+          // Find primary bank account or use first one
+          const primaryAccount =
+            bankAccts.find((acc) => acc.is_primary) || bankAccts[0];
+          setPaymentFormData((prev) => ({
+            ...prev,
+            payment_method: "BANK_TRANSFER",
+            bank_account_id: primaryAccount.id,
+            e_wallet_id: undefined,
+          }));
+        } else if (wallets.length > 0) {
+          // Find primary e-wallet or use first one
+          const primaryWallet =
+            wallets.find((wallet) => wallet.is_primary) || wallets[0];
+          setPaymentFormData((prev) => ({
+            ...prev,
+            payment_method: "E_WALLET",
+            e_wallet_id: primaryWallet.id,
+            bank_account_id: undefined,
+          }));
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching profile data:", error);
+    }
   };
 
   // Define handleSendReminder function
@@ -149,6 +194,9 @@ export default function InvoiceDetailPage({
         const data = await invoiceApi.getInvoice(parseInt(params.id));
         setInvoice(data);
 
+        // Fetch payment methods
+        await fetchPaymentMethods();
+
         // Set initial payment amount to balance due
         if (data.payments && data.payments.length > 0) {
           const totalPaid = data.payments.reduce(
@@ -225,10 +273,18 @@ export default function InvoiceDetailPage({
       setIsSubmittingPayment(true);
       setError(""); // Reset error message
 
-      await invoiceApi.addPayment({
+      const paymentData = {
         invoice_id: invoice.invoice_id,
-        ...paymentFormData,
-      });
+        amount: paymentFormData.amount,
+        payment_date: paymentFormData.payment_date,
+        payment_method: paymentFormData.payment_method,
+        reference: paymentFormData.reference,
+        notes: paymentFormData.notes,
+        bank_account_id: paymentFormData.bank_account_id,
+        e_wallet_id: paymentFormData.e_wallet_id,
+      };
+
+      await invoiceApi.addPayment(paymentData);
 
       // Refetch the invoice to get updated data
       const updatedInvoice = await invoiceApi.getInvoice(invoice.invoice_id);
@@ -274,6 +330,11 @@ export default function InvoiceDetailPage({
 
     // Re-render component
     window.location.reload();
+  };
+
+  // Wrapper untuk setPaymentFormData untuk mengatasi error TypeScript
+  const setPaymentFormDataWrapper = (data: PaymentFormData) => {
+    setPaymentFormData(data);
   };
 
   const ActionButton = invoice?.status ? statusActions[invoice.status] : null;
@@ -478,12 +539,14 @@ export default function InvoiceDetailPage({
         showPaymentForm={showPaymentForm}
         setShowPaymentForm={setShowPaymentForm}
         paymentFormData={paymentFormData}
-        setPaymentFormData={setPaymentFormData}
+        setPaymentFormData={setPaymentFormDataWrapper} // Gunakan wrapper untuk mengatasi error
         handlePaymentSubmit={handlePaymentSubmit}
         isSubmittingPayment={isSubmittingPayment}
         balanceDue={balanceDue}
         params={params}
         router={router}
+        bankAccounts={bankAccounts}
+        eWallets={eWallets}
       />
 
       {/* Invoice Content Component */}

@@ -1,108 +1,97 @@
 // src/components/products/ProductCard.tsx
-import { Product } from "@/types";
-import { formatCurrency, formatDate } from "@/lib/utils";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+
 import Link from "next/link";
-import { Tag, DollarSign, Archive } from "lucide-react";
-import Image from "next/image";
+import { Product } from "@/types";
+import { formatCurrency } from "@/lib/utils";
+import { Archive, Tag } from "lucide-react";
+import CloudinaryImage from "@/components/cloudinaryImage";
 
 interface ProductCardProps {
   product: Product;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+export default function ProductCard({ product }: ProductCardProps) {
   const isArchived = !!product.deleted_at;
 
   return (
-    <Link href={`/dashboard/products/${product.product_id}`} className="block">
-      <Card
-        className={`h-full transition-shadow hover:shadow-md ${
-          isArchived ? "bg-gray-50" : ""
+    <Link
+      href={`/dashboard/products/${product.product_id}`}
+      className="block transition-all duration-200 hover:shadow-md"
+    >
+      <div
+        className={`bg-white rounded-lg shadow overflow-hidden h-full border ${
+          isArchived ? "border-gray-300 opacity-80" : "border-transparent"
         }`}
       >
-        {product.image && (
-          <div className="relative w-full h-40 overflow-hidden">
-            <Image
-              src={product.image}
-              alt={product.name}
-              width={300}
-              height={200}
-              className="w-full h-full object-cover"
-            />
-          </div>
-        )}
-
-        <CardHeader className={`pb-2 ${product.image ? "pt-3" : ""}`}>
-          <div className="flex items-center justify-between">
-            <CardTitle
-              className="text-lg font-bold line-clamp-1"
-              title={product.name}
-            >
-              {product.name}
-            </CardTitle>
-            <span className="font-bold text-lg">
-              {formatCurrency(Number(product.price))}
-            </span>
-          </div>
-        </CardHeader>
-
-        <CardContent className="pb-4">
-          {product.description && (
-            <div className="mb-3">
-              <p
-                className="text-sm text-gray-600 line-clamp-2"
-                title={product.description}
-              >
-                {product.description}
-              </p>
+        {/* Product image */}
+        <div className="relative">
+          {product.image ? (
+            <div className="w-full h-40 overflow-hidden">
+              <CloudinaryImage
+                src={product.image}
+                alt={product.name}
+                width={300}
+                height={160}
+                className="object-cover w-full h-full"
+              />
+            </div>
+          ) : (
+            <div className="w-full h-40 bg-gray-100 flex items-center justify-center">
+              <span className="text-gray-400">No image</span>
             </div>
           )}
 
-          <div className="flex items-center text-xs text-gray-500 mb-2">
-            {product.unit && (
-              <div className="flex items-center mr-4" title="Unit">
-                <Tag className="h-3 w-3 mr-1" />
-                <span>{product.unit}</span>
-              </div>
-            )}
+          {/* Archive badge - PENTING: Selalu tampilkan badge jika product diarsipkan */}
+          {isArchived && (
+            <div className="absolute top-2 right-2 bg-gray-800/70 text-white px-2 py-1 rounded-md text-xs flex items-center">
+              <Archive className="h-3 w-3 mr-1" />
+              Archived
+            </div>
+          )}
+        </div>
 
-            {product.tax_rate && product.tax_rate > 0 && (
-              <div className="flex items-center" title="Tax Rate">
-                <DollarSign className="h-3 w-3 mr-1" />
-                <span>{product.tax_rate}%</span>
-              </div>
-            )}
+        <div className="p-4">
+          <div className="flex justify-between items-start">
+            <h3
+              className={`text-lg font-medium ${
+                isArchived ? "text-gray-600" : "text-gray-900"
+              }`}
+            >
+              {product.name}
+            </h3>
+            <span
+              className={`text-lg font-bold ${
+                isArchived ? "text-gray-600" : "text-gray-900"
+              }`}
+            >
+              {formatCurrency(Number(product.price))}
+            </span>
           </div>
 
-          <div className="flex flex-wrap gap-2 mt-3">
+          {product.description && (
+            <p className="mt-2 text-sm text-gray-500 line-clamp-2">
+              {product.description}
+            </p>
+          )}
+
+          <div className="mt-4 flex items-center justify-between">
             {product.category && (
-              <Badge
-                variant="outline"
-                className="bg-blue-50 text-blue-700 border-blue-200"
-              >
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                <Tag className="h-3 w-3 mr-1" />
                 {product.category}
-              </Badge>
+              </span>
             )}
 
+            {/* Tambahan indikator archived di bagian bawah card */}
             {isArchived && (
-              <Badge
-                variant="outline"
-                className="bg-gray-100 text-gray-700 border-gray-300 flex items-center"
-              >
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                 <Archive className="h-3 w-3 mr-1" />
                 Archived
-              </Badge>
+              </span>
             )}
           </div>
-
-          <div className="text-xs text-gray-400 mt-3">
-            Last updated: {formatDate(product.updated_at)}
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </Link>
   );
-};
-
-export default ProductCard;
+}
