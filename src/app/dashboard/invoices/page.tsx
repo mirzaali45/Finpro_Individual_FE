@@ -8,11 +8,8 @@ import { Invoice, InvoiceStatus, Client, BankAccount, EWallet } from "@/types";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Plus,
-  Search,
-  Filter,
   ArrowUpDown,
   FileText,
   ChevronLeft,
@@ -20,7 +17,6 @@ import {
   ChevronsLeft,
   ChevronsRight,
   AlertCircle,
-  Calendar,
 } from "lucide-react";
 import { useDebounce } from "@/components/hooks/useDebounce";
 import InvoiceFilters from "@/components/invoices/InvoiceFilter";
@@ -330,6 +326,9 @@ export default function InvoicesPage() {
     customDateRange,
     sortField,
     sortDirection,
+    currentPage,
+    updateQueryParams,
+    searchTerm,
   ]);
 
   // Update paginated results when filtered invoices or current page changes
@@ -462,7 +461,7 @@ export default function InvoicesPage() {
           </DialogDescription>
           <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 p-4 rounded my-4">
             <p>
-              Without payment methods, clients won't know how to pay your
+              Without payment methods, clients won&apos;t know how to pay your
               invoices.
             </p>
           </div>

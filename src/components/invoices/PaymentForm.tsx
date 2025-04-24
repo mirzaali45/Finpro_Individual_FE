@@ -228,7 +228,7 @@ export default function PaymentForm({
   useEffect(() => {
     // Only update if payment method actually changed
     if (paymentFormData.payment_method !== paymentMethod) {
-      let updatedData: PaymentFormData = {
+      const updatedData: PaymentFormData = {
         ...paymentFormData,
         payment_method: paymentMethod,
         bank_account_id: undefined,
@@ -249,7 +249,13 @@ export default function PaymentForm({
 
       setPaymentFormData(updatedData);
     }
-  }, [paymentMethod, bankAccounts, eWallets]);
+  }, [
+    paymentMethod,
+    bankAccounts,
+    eWallets,
+    paymentFormData,
+    setPaymentFormData,
+  ]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>

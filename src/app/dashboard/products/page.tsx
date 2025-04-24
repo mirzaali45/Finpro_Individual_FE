@@ -224,7 +224,7 @@ import { Product } from "@/types";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Filter, X, Archive } from "lucide-react";
+import { Plus, Search, X, Archive } from "lucide-react";
 import ProductCard from "@/components/products/ProductCard";
 import { useToast } from "@/components/ui/use-toast";
 import { debounce } from "lodash";
@@ -272,11 +272,19 @@ export default function ProductsPage() {
 
   // Debounce untuk search term
   const debouncedSetSearchTerm = useCallback(
-    debounce((value: string) => {
-      setDebouncedSearchTerm(value);
-      updateUrlWithFilters(value, categoryFilter, showArchivedProducts);
-    }, 500),
-    [categoryFilter, showArchivedProducts, updateUrlWithFilters]
+    (value: string) => {
+      const debouncedFunction = debounce(() => {
+        setDebouncedSearchTerm(value);
+        updateUrlWithFilters(value, categoryFilter, showArchivedProducts);
+      }, 500);
+      debouncedFunction();
+    },
+    [
+      categoryFilter,
+      showArchivedProducts,
+      updateUrlWithFilters,
+      setDebouncedSearchTerm,
+    ]
   );
 
   // Handle perubahan input dengan debounce

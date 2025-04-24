@@ -428,7 +428,7 @@ export default function NewInvoicePage() {
           </DialogDescription>
           <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 p-4 rounded my-4">
             <p>
-              Without payment methods, clients won't know how to pay your
+              Without payment methods, clients won&apos;t know how to pay your
               invoices.
             </p>
           </div>

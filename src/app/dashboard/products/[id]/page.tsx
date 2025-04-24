@@ -95,15 +95,15 @@ export default function ProductDetailPage({
           } else {
             setProductUsage([]);
           }
-        } catch (err) {
-          console.error("Failed to fetch product usage:", err);
+        } catch {
           setProductUsage([]);
         }
-      } catch (error) {
+      } catch (err: unknown) {
         setError("Failed to load product details. Please try again.");
+        const apiError = err as ApiError;
         toast({
           title: "Error",
-          description: "Failed to load product details",
+          description: apiError.message || "Failed to load product details",
           variant: "destructive",
         });
       } finally {
@@ -143,7 +143,6 @@ export default function ProductDetailPage({
       // Navigate immediately to the products list page
       router.push("/dashboard/products");
     } catch (err: unknown) {
-      console.error("Error deleting product:", err);
       const apiError = err as ApiError;
       setError("Failed to delete product. Please try again.");
       toast({

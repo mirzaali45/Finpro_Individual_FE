@@ -14,7 +14,6 @@ import {
   InvoiceStatus,
   LoginFormData,
   Payment,
-  PaymentMethod,
   Product,
   Profile,
   RecurringInvoice,
