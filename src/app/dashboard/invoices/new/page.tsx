@@ -4,18 +4,27 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { clientApi, invoiceApi, productApi } from "@/lib/api";
+import { clientApi, invoiceApi, productApi, authApi } from "@/lib/api";
 import {
   Client,
   CreateInvoiceFormData,
   InvoiceStatus,
   Product,
   RecurringPattern,
+  BankAccount,
+  EWallet,
 } from "@/types";
 import { ApiError, formatCurrency } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 export default function NewInvoicePage() {
   const router = useRouter();
@@ -24,6 +33,9 @@ export default function NewInvoicePage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [noPaymentMethodsDialog, setNoPaymentMethodsDialog] = useState(false);
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
+  const [eWallets, setEWallets] = useState<EWallet[]>([]);
 
   const [formData, setFormData] = useState<CreateInvoiceFormData>({
     client_id: 0,
@@ -44,11 +56,37 @@ export default function NewInvoicePage() {
   const [taxAmount, setTaxAmount] = useState(0);
   const [totalAmount, setTotalAmount] = useState(0);
 
+  // Check if payment methods exist
+  const checkPaymentMethods = async () => {
+    try {
+      const profileData = await authApi.getProfile();
+      if (profileData && profileData.user) {
+        // Get bank accounts and e-wallets
+        const accounts = profileData.profile?.bank_accounts || [];
+        const wallets = profileData.profile?.e_wallets || [];
+
+        setBankAccounts(accounts);
+        setEWallets(wallets);
+
+        // Check if user has any payment methods
+        if (accounts.length === 0 && wallets.length === 0) {
+          setNoPaymentMethodsDialog(true);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching profile data:", error);
+    }
+  };
+
   // Fetch clients and products
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
+
+        // Check payment methods first
+        await checkPaymentMethods();
+
         const [clientsData, productsData] = await Promise.all([
           clientApi.getClients(),
           productApi.getProducts(),
@@ -172,13 +210,18 @@ export default function NewInvoicePage() {
     });
   };
 
-  // Perbaikan pada fungsi handleSubmit di src/app/dashboard/invoices/new/page.tsx
-
+  // Improved handleSubmit function with payment methods validation
   const handleSubmit = async (
     e: React.FormEvent,
     status: InvoiceStatus = "DRAFT"
   ) => {
     e.preventDefault();
+
+    // Check if payment methods exist
+    if (bankAccounts.length === 0 && eWallets.length === 0) {
+      setNoPaymentMethodsDialog(true);
+      return;
+    }
 
     if (formData.items.length === 0) {
       setError("Please add at least one item to the invoice.");
@@ -370,6 +413,38 @@ export default function NewInvoicePage() {
           Create New Invoice
         </h1>
       </div>
+
+      {/* No Payment Methods Dialog */}
+      <Dialog
+        open={noPaymentMethodsDialog}
+        onOpenChange={setNoPaymentMethodsDialog}
+      >
+        <DialogContent>
+          <DialogTitle>Payment Methods Required</DialogTitle>
+          <DialogDescription>
+            You need to add at least one payment method (bank account or
+            e-wallet) to your profile before creating invoices. This allows
+            clients to know how to pay you.
+          </DialogDescription>
+          <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 p-4 rounded my-4">
+            <p>
+              Without payment methods, clients won't know how to pay your
+              invoices.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setNoPaymentMethodsDialog(false)}
+            >
+              Cancel
+            </Button>
+            <Button onClick={() => router.push("/dashboard/profile")}>
+              Add Payment Methods
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {error && (
         <div
@@ -733,6 +808,28 @@ export default function NewInvoicePage() {
           <div className="bg-white shadow-sm rounded-lg p-6 sticky top-6">
             <h2 className="text-lg font-medium mb-6">Invoice Summary</h2>
 
+            {/* Payment Method Warning if not configured */}
+            {bankAccounts.length === 0 && eWallets.length === 0 && (
+              <div className="mb-6 bg-yellow-50 border border-yellow-200 text-yellow-800 p-4 rounded flex items-start">
+                <AlertCircle className="h-5 w-5 text-yellow-400 mr-2 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium">No payment methods found</p>
+                  <p className="mt-1 text-sm">
+                    You need to add at least one payment method to your profile
+                    before creating invoices.
+                  </p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="mt-2"
+                    onClick={() => router.push("/dashboard/profile")}
+                  >
+                    Add Payment Methods
+                  </Button>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-4">
               <div className="flex justify-between py-2 border-b">
                 <span className="text-gray-600">Subtotal:</span>
@@ -753,14 +850,20 @@ export default function NewInvoicePage() {
                 className="w-full"
                 variant="outline"
                 onClick={(e) => handleSubmit(e, "DRAFT")}
-                disabled={isLoading}
+                disabled={
+                  isLoading ||
+                  (bankAccounts.length === 0 && eWallets.length === 0)
+                }
               >
                 {isLoading ? "Saving..." : "Save as Draft"}
               </Button>
               <Button
                 className="w-full"
                 onClick={(e) => handleSubmit(e, "PENDING")}
-                disabled={isLoading}
+                disabled={
+                  isLoading ||
+                  (bankAccounts.length === 0 && eWallets.length === 0)
+                }
               >
                 {isLoading ? "Saving..." : "Save and Send"}
               </Button>
@@ -771,6 +874,35 @@ export default function NewInvoicePage() {
               </Link>
             </div>
           </div>
+
+          {/* Client info box if a client is selected */}
+          {formData.client_id > 0 && (
+            <div className="bg-white shadow-sm rounded-lg p-6">
+              <h3 className="text-md font-medium mb-4">Client Information</h3>
+              {clients.map(
+                (client) =>
+                  client.client_id === formData.client_id && (
+                    <div key={client.client_id} className="space-y-2 text-sm">
+                      <p className="font-medium">{client.name}</p>
+                      {client.company_name && <p>{client.company_name}</p>}
+                      <p>{client.email}</p>
+                      {client.phone && <p>{client.phone}</p>}
+                      {client.address && (
+                        <div className="mt-2">
+                          <p>{client.address}</p>
+                          {client.city && client.state && (
+                            <p>
+                              {client.city}, {client.state} {client.postal_code}
+                            </p>
+                          )}
+                          {client.country && <p>{client.country}</p>}
+                        </div>
+                      )}
+                    </div>
+                  )
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

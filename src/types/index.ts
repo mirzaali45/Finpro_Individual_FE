@@ -259,11 +259,7 @@ export type RecurringPattern =
   | "SEMIANNUALLY"
   | "ANNUALLY";
 
-export type PaymentMethod =
-  | "CASH"
-  | "BANK_TRANSFER"
-  | "E_WALLET"
-  | "OTHER";
+export type PaymentMethod = "CASH" | "BANK_TRANSFER" | "E_WALLET" | "OTHER";
 
 export interface InvoiceItem {
   item_id: number;
@@ -281,6 +277,19 @@ export interface InvoiceItem {
   product?: Product;
 }
 
+// export interface Payment {
+//   payment_id: number;
+//   invoice_id: number;
+//   amount: number;
+//   payment_date: string;
+//   payment_method: PaymentMethod;
+//   reference?: string;
+//   notes?: string;
+//   created_at: string;
+
+//   // Relations
+//   invoice?: Invoice;
+// }
 export interface Payment {
   payment_id: number;
   invoice_id: number;
@@ -290,11 +299,26 @@ export interface Payment {
   reference?: string;
   notes?: string;
   created_at: string;
+  bank_account_id?: number; // Added field
+  e_wallet_id?: number; // Added field
 
   // Relations
   invoice?: Invoice;
+  BankAccount?: {
+    id: number;
+    bank_name: string;
+    account_number: string;
+    account_holder: string;
+    is_primary: boolean;
+  };
+  EWallet?: {
+    id: number;
+    wallet_type: string;
+    phone_number: string;
+    account_name: string;
+    is_primary: boolean;
+  };
 }
-
 // Update definisi Invoice untuk menyertakan data pembayaran
 export interface Invoice {
   // ...existing fields
@@ -373,6 +397,8 @@ export interface CreatePaymentFormData {
   payment_method: PaymentMethod;
   reference?: string;
   notes?: string;
+  bank_account_id?: number; // Tambahkan property ini
+  e_wallet_id?: number; // Added field
 }
 
 // Recurring Invoice Types

@@ -1,5 +1,5 @@
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { Invoice } from "@/types";
+import { Invoice, Payment } from "@/types";
 
 interface InvoiceContentProps {
   invoice: Invoice;
@@ -12,6 +12,53 @@ export default function InvoiceContent({
   totalPaid,
   balanceDue,
 }: InvoiceContentProps) {
+  // Improved function to get payment method details with better fallbacks
+  const getPaymentMethodDetail = (payment: Payment): string => {
+    try {
+      // Handle bank transfers
+      if (payment.payment_method === "BANK_TRANSFER") {
+        // Check for BankAccount relation in expected format
+        if (payment.BankAccount) {
+          return `${payment.BankAccount.bank_name} - ${payment.BankAccount.account_number}`;
+        }
+
+        // Check for bank account info in user profile as fallback
+        if (payment.bank_account_id && invoice.user?.profile?.bank_accounts) {
+          const matchingAccount = invoice.user.profile.bank_accounts.find(
+            (account) => account.id === payment.bank_account_id
+          );
+          if (matchingAccount) {
+            return `${matchingAccount.bank_name} - ${matchingAccount.account_number}`;
+          }
+        }
+      }
+
+      // Handle e-wallet payments
+      else if (payment.payment_method === "E_WALLET") {
+        // Check for EWallet relation in expected format
+        if (payment.EWallet) {
+          return `${payment.EWallet.wallet_type} - ${payment.EWallet.phone_number}`;
+        }
+
+        // Check for e-wallet info in user profile as fallback
+        if (payment.e_wallet_id && invoice.user?.profile?.e_wallets) {
+          const matchingWallet = invoice.user.profile.e_wallets.find(
+            (wallet) => wallet.id === payment.e_wallet_id
+          );
+          if (matchingWallet) {
+            return `${matchingWallet.wallet_type} - ${matchingWallet.phone_number}`;
+          }
+        }
+      }
+
+      // Fallback to reference or transaction method
+      return payment.reference || payment.payment_method || "-";
+    } catch (error) {
+      console.error("Error getting payment method details:", error);
+      return payment.reference || payment.payment_method || "-";
+    }
+  };
+
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -218,7 +265,7 @@ export default function InvoiceContent({
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
-                    Reference
+                    Account/Reference
                   </th>
                   <th
                     scope="col"
@@ -238,7 +285,7 @@ export default function InvoiceContent({
                       {payment.payment_method}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {payment.reference || "-"}
+                      {getPaymentMethodDetail(payment)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600 text-right">
                       {formatCurrency(Number(payment.amount))}
@@ -282,18 +329,18 @@ export default function InvoiceContent({
         invoice.user.profile.e_wallets.length > 0) ? (
         <div className="mt-8">
           <h3 className="text-sm font-medium text-gray-700 mb-2">
-            Informasi Pembayaran
+            Payment Information
           </h3>
           <div className="rounded-md bg-gray-50 p-4">
             <p className="text-sm text-gray-600 mb-3">
-              Silakan lakukan pembayaran melalui salah satu metode berikut:
+              Please make payment using one of the following methods:
             </p>
 
             {invoice.user?.profile?.bank_accounts &&
               invoice.user.profile.bank_accounts.length > 0 && (
                 <div className="mb-4">
                   <h4 className="text-sm font-medium text-gray-600 mb-1">
-                    Rekening Bank:
+                    Bank Accounts:
                   </h4>
                   <ul className="text-sm text-gray-600">
                     {invoice.user.profile.bank_accounts
@@ -309,7 +356,7 @@ export default function InvoiceContent({
                           {account.account_number} ({account.account_name})
                           {account.is_primary && (
                             <span className="text-green-600 ml-1">
-                              (Direkomendasikan)
+                              (Recommended)
                             </span>
                           )}
                         </li>
@@ -349,8 +396,8 @@ export default function InvoiceContent({
 
             <p className="text-sm text-gray-600 mt-3 italic">
               Please include the invoice number #{invoice.invoice_number} when
-              making payments to facilitate verification. and if so, please send
-              proof of payment via email or telephone number.
+              making payments to facilitate verification. Please send proof of
+              payment via email or telephone number.
             </p>
           </div>
         </div>
