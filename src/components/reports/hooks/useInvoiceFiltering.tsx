@@ -2,22 +2,47 @@
 import { useState, useEffect } from "react";
 import { Invoice } from "@/types";
 
-export function useInvoiceFiltering(allInvoices: Invoice[]) {
+interface DateRange {
+  start: string;
+  end: string;
+}
+
+export function useInvoiceFiltering(
+  allInvoices: Invoice[],
+  initialDateRange?: DateRange,
+  initialClientFilter?: number | "all",
+  initialStatusFilter?: string | "all",
+  initialSortField?: string,
+  initialSortDirection?: "asc" | "desc"
+) {
   const [filteredInvoices, setFilteredInvoices] = useState<Invoice[]>([]);
 
-  // Filters
-  const [dateRange, setDateRange] = useState<{ start: string; end: string }>({
-    start: new Date(new Date().setMonth(new Date().getMonth() - 3))
-      .toISOString()
-      .split("T")[0], // 3 months ago
-    end: new Date().toISOString().split("T")[0], // today
-  });
-  const [clientFilter, setClientFilter] = useState<number | "all">("all");
-  const [statusFilter, setStatusFilter] = useState<string | "all">("all");
+  // Filters with defaults or initial values from URL params
+  const [dateRange, setDateRange] = useState<DateRange>(
+    initialDateRange || {
+      start: new Date(new Date().setMonth(new Date().getMonth() - 3))
+        .toISOString()
+        .split("T")[0], // 3 months ago
+      end: new Date().toISOString().split("T")[0], // today
+    }
+  );
 
-  // Sort
-  const [sortField, setSortField] = useState<string>("issue_date");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [clientFilter, setClientFilter] = useState<number | "all">(
+    initialClientFilter || "all"
+  );
+
+  const [statusFilter, setStatusFilter] = useState<string | "all">(
+    initialStatusFilter || "all"
+  );
+
+  // Sort with defaults or initial values from URL params
+  const [sortField, setSortField] = useState<string>(
+    initialSortField || "issue_date"
+  );
+
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">(
+    initialSortDirection || "desc"
+  );
 
   // Apply filters when dependencies change
   useEffect(() => {
