@@ -5,7 +5,6 @@ import { Client } from "@/types";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Filter, Calendar, X } from "lucide-react";
-import { useEffect } from "react";
 
 interface InvoiceFilterProps {
   clients: Client[];

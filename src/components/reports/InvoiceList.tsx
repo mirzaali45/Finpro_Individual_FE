@@ -28,7 +28,6 @@ interface InvoiceListProps {
 export default function InvoiceList({
   invoices,
   sortField,
-  sortDirection,
   onSortChange,
   currentPage,
   totalPages,
