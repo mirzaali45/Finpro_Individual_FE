@@ -45,7 +45,8 @@ export default function InvoicesPage() {
 
   // Get query parameters with defaults
   const initialSearchTerm = searchParams.get("search") || "";
-  const initialStatus = searchParams.get("status") as InvoiceStatus | null;
+  const initialStatus =
+    (searchParams.get("status")?.toUpperCase() as InvoiceStatus | null) || null;
   const initialClientId = searchParams.get("client_id") || "ALL";
   const initialDateFilter = searchParams.get("date_range") || "all";
   const initialStartDate = searchParams.get("start_date") || null;
@@ -57,7 +58,7 @@ export default function InvoicesPage() {
 
   // Search and filters
   const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
-  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [statusFilter, setStatusFilter] = useState<InvoiceStatus | "ALL">(
     initialStatus || "ALL"
   );
@@ -88,7 +89,7 @@ export default function InvoicesPage() {
     DRAFT: "bg-gray-100 text-gray-800",
     PENDING: "bg-blue-100 text-blue-800",
     PAID: "bg-green-100 text-green-800",
-    PARTIAL: "bg-yellow-100 text-yellow-800",
+    PARTIAL: "bg-yellow-100 text-yellow-800", // Color for PARTIAL status
     OVERDUE: "bg-red-100 text-red-800",
     CANCELLED: "bg-gray-100 text-gray-800",
   };
@@ -114,7 +115,9 @@ export default function InvoicesPage() {
     if (sortDirection !== "desc") params.set("sort_dir", sortDirection);
 
     const queryString = params.toString();
-    router.push(`/dashboard/invoices${queryString ? `?${queryString}` : ""}`);
+    router.push(`/dashboard/invoices${queryString ? `?${queryString}` : ""}`, {
+      scroll: false,
+    });
   }, [
     searchTerm,
     statusFilter,
@@ -194,6 +197,67 @@ export default function InvoicesPage() {
     return null;
   };
 
+  // Helper function to check if a string is a month name (partial or full)
+  const isMonthName = (value: string): number | null => {
+    const monthNames = [
+      "january",
+      "february",
+      "march",
+      "april",
+      "may",
+      "june",
+      "july",
+      "august",
+      "september",
+      "october",
+      "november",
+      "december",
+    ];
+
+    const shortMonthNames = [
+      "jan",
+      "feb",
+      "mar",
+      "apr",
+      "may",
+      "jun",
+      "jul",
+      "aug",
+      "sep",
+      "oct",
+      "nov",
+      "dec",
+    ];
+
+    const lowerValue = value.toLowerCase();
+
+    // Check full month names
+    const fullMonthIndex = monthNames.findIndex(
+      (month) => month === lowerValue
+    );
+    if (fullMonthIndex !== -1) {
+      return fullMonthIndex + 1; // Return 1-based month number
+    }
+
+    // Check abbreviated month names
+    const shortMonthIndex = shortMonthNames.findIndex(
+      (month) => month === lowerValue
+    );
+    if (shortMonthIndex !== -1) {
+      return shortMonthIndex + 1; // Return 1-based month number
+    }
+
+    // Check if any month name contains the search string
+    const partialMonthIndex = monthNames.findIndex((month) =>
+      month.includes(lowerValue)
+    );
+    if (partialMonthIndex !== -1 && lowerValue.length >= 3) {
+      return partialMonthIndex + 1; // Return 1-based month number (only if search is >= 3 chars)
+    }
+
+    return null;
+  };
+
   // Filter and sort invoices when dependencies change
   useEffect(() => {
     if (invoices.length === 0) return;
@@ -254,13 +318,13 @@ export default function InvoicesPage() {
       }
     }
 
-    // Apply search filter
-    if (searchTerm.trim() !== "") {
-      const searchLower = searchTerm.toLowerCase();
+    // Apply search filter using the debounced search term
+    if (debouncedSearchTerm.trim() !== "") {
+      const searchLower = debouncedSearchTerm.toLowerCase();
 
       // Check if search is in MM/YYYY format for month search
-      if (isMonthYearFormat(searchTerm)) {
-        const monthYear = extractMonthYear(searchTerm);
+      if (isMonthYearFormat(debouncedSearchTerm)) {
+        const monthYear = extractMonthYear(debouncedSearchTerm);
         if (monthYear) {
           filtered = filtered.filter((invoice) => {
             const issueDate = new Date(invoice.issue_date);
@@ -270,6 +334,14 @@ export default function InvoicesPage() {
             );
           });
         }
+      }
+      // Check if search is a month name
+      else if (isMonthName(searchLower)) {
+        const monthNumber = isMonthName(searchLower);
+        filtered = filtered.filter((invoice) => {
+          const issueDate = new Date(invoice.issue_date);
+          return issueDate.getMonth() + 1 === monthNumber;
+        });
       } else {
         // Regular search
         filtered = filtered.filter(
@@ -326,8 +398,6 @@ export default function InvoicesPage() {
     customDateRange,
     sortField,
     sortDirection,
-    currentPage,
-    updateQueryParams,
     searchTerm,
   ]);
 
@@ -355,19 +425,84 @@ export default function InvoicesPage() {
     setPaginatedInvoices(paginatedItems);
   }, [filteredInvoices, currentPage]);
 
-  // Update URL when page changes
+  // Update URL when params change
   useEffect(() => {
     updateQueryParams();
-  }, [currentPage, updateQueryParams]);
+  }, [
+    currentPage,
+    searchTerm,
+    statusFilter,
+    clientFilter,
+    dateFilter,
+    customDateRange,
+    sortField,
+    sortDirection,
+    updateQueryParams,
+  ]);
 
-  // Sync search term with debounced value
+  // Update URL params when debounced search term changes
   useEffect(() => {
-    setSearchTerm(debouncedSearchTerm);
-  }, [debouncedSearchTerm]);
+    // Only update when debounced value has settled
+    if (debouncedSearchTerm !== searchTerm) {
+      // Don't update searchTerm state here to avoid loops
+      // Just update the URL params using the debounced value
+      const params = new URLSearchParams(window.location.search);
+
+      if (debouncedSearchTerm) {
+        params.set("search", debouncedSearchTerm);
+      } else {
+        params.delete("search");
+      }
+
+      router.push(
+        `/dashboard/invoices${
+          params.toString() ? `?${params.toString()}` : ""
+        }`,
+        { scroll: false }
+      );
+    }
+  }, [debouncedSearchTerm, searchTerm, router]);
 
   const handleSearch = (term: string) => {
     setSearchTerm(term);
-    setCurrentPage(1); // Reset to first page when changing search
+    setCurrentPage(1); // Reset to first page when searching
+
+    // Update the URL with the search term immediately
+    const params = new URLSearchParams(window.location.search);
+
+    if (term) {
+      params.set("search", term);
+    } else {
+      params.delete("search");
+    }
+
+    // Reset page to 1 when searching
+    if (currentPage > 1) {
+      params.delete("page");
+    }
+
+    // Update other parameters that should be preserved
+    if (statusFilter !== "ALL")
+      params.set("status", statusFilter.toLowerCase());
+    if (clientFilter !== "ALL")
+      params.set("client_id", clientFilter.toString());
+    if (dateFilter !== "all") params.set("date_range", dateFilter);
+
+    if (dateFilter === "custom") {
+      if (customDateRange.startDate)
+        params.set("start_date", customDateRange.startDate);
+      if (customDateRange.endDate)
+        params.set("end_date", customDateRange.endDate);
+    }
+
+    if (sortField !== "issue_date") params.set("sort_field", sortField);
+    if (sortDirection !== "desc") params.set("sort_dir", sortDirection);
+
+    // Update the URL immediately without waiting for debounce
+    router.replace(
+      `/dashboard/invoices${params.toString() ? `?${params.toString()}` : ""}`,
+      { scroll: false }
+    );
   };
 
   const handleStatusFilterChange = (status: InvoiceStatus | "ALL") => {

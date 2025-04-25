@@ -805,7 +805,8 @@ export default function NewInvoicePage() {
 
         {/* Right column - Summary and actions */}
         <div className="space-y-6">
-          <div className="bg-white shadow-sm rounded-lg p-6 sticky top-6">
+          {/* Modified this div to have a max-height and overflow-y-auto */}
+          <div className="bg-white shadow-sm rounded-lg p-6 lg:sticky lg:top-6 max-h-[calc(100vh-6rem)] overflow-y-auto">
             <h2 className="text-lg font-medium mb-6">Invoice Summary</h2>
 
             {/* Payment Method Warning if not configured */}
@@ -874,35 +875,6 @@ export default function NewInvoicePage() {
               </Link>
             </div>
           </div>
-
-          {/* Client info box if a client is selected */}
-          {formData.client_id > 0 && (
-            <div className="bg-white shadow-sm rounded-lg p-6">
-              <h3 className="text-md font-medium mb-4">Client Information</h3>
-              {clients.map(
-                (client) =>
-                  client.client_id === formData.client_id && (
-                    <div key={client.client_id} className="space-y-2 text-sm">
-                      <p className="font-medium">{client.name}</p>
-                      {client.company_name && <p>{client.company_name}</p>}
-                      <p>{client.email}</p>
-                      {client.phone && <p>{client.phone}</p>}
-                      {client.address && (
-                        <div className="mt-2">
-                          <p>{client.address}</p>
-                          {client.city && client.state && (
-                            <p>
-                              {client.city}, {client.state} {client.postal_code}
-                            </p>
-                          )}
-                          {client.country && <p>{client.country}</p>}
-                        </div>
-                      )}
-                    </div>
-                  )
-              )}
-            </div>
-          )}
         </div>
       </div>
     </div>
